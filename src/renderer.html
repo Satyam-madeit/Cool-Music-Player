@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎵 Cool Music Player</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<header class="shell">
+  <div class="brand">
+    <span class="emoji">🎵</span>
+    <span class="title">COOL MUSIC PLAYER</span>
+  </div>
+  <div class="header-actions">
+    <button id="btn-pick-folder" class="btn btn-accent">📁 Pick Music Folder</button>
+  </div>
+</header>
+
+<!-- ============ MAIN LAYOUT ============ -->
+<main class="app">
+  <!-- Sidebar: library -->
+  <aside class="sidebar">
+    <div class="section-title">💿 Library</div>
+    <div class="folder-info" id="folder-info" style="display:none;">
+      <span class="label">Folder:</span>
+      <span class="path" id="folder-path"></span>
+    </div>
+    <div class="count-chip" id="count-chip" style="display:none;">
+      <span id="track-count">0</span> tracks found
+    </div>
+
+    <div class="search-wrap">
+      <input type="text" id="search" placeholder="🔍 search tracks...">
+    </div>
+
+    <ul class="tracklist" id="tracklist">
+      <!-- tracks injected here -->
+    </ul>
+    <div class="empty" id="empty-state" style="display:none;">
+      <div class="empty-emoji">📭</div>
+      <div class="empty-msg">No tracks yet.</div>
+      <div class="empty-hint">Pick a folder with .flac or .mp3 files.</div>
+    </div>
+  </aside>
+
+  <!-- Now playing panel -->
+  <section class="nowplaying">
+    <div class="art">
+      <div class="art-emoji">💿</div>
+    </div>
+    <div class="info">
+      <div class="track-title" id="now-title">Select a track</div>
+      <div class="track-artist" id="now-artist">—</div>
+      <div class="track-ext" id="now-ext"></div>
+    </div>
+
+    <div class="controls">
+      <button id="btn-shuffle" class="ctrl-btn" title="Shuffle 🔀">🔀</button>
+      <button id="btn-prev" class="ctrl-btn ctrl-big" title="Previous ⏮">⏮</button>
+      <button id="btn-play" class="ctrl-btn ctrl-play" title="Play / Pause ▶">▶</button>
+      <button id="btn-next" class="ctrl-btn ctrl-big" title="Next ⏭">⏭</button>
+      <button id="btn-repeat" class="ctrl-btn" title="Repeat 🔁">🔁</button>
+    </div>
+
+    <div class="progress-wrap">
+      <input type="range" id="progress" min="0" max="100" value="0">
+      <div class="time">
+        <span id="time-current">0:00</span>
+        <span id="time-duration">0:00</span>
+      </div>
+    </div>
+
+    <div class="volume-wrap">
+      <span class="emoji">🔊</span>
+      <input type="range" id="volume" min="0" max="1" step="0.05" value="1">
+    </div>
+  </section>
+</main>
+
+<script src="renderer.js"></script>
+</body>
+</html>
