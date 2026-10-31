@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html class="dark" lang="en" style="--accent-color: #a855f7; --accent-secondary: #ec4899; --ambient-bg-gradient: radial-gradient(circle at 65% 20%, rgba(139, 92, 246, 0.22) 0%, rgba(236, 72, 153, 0.10) 40%, rgba(19, 19, 22, 0) 70%);">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="web_dashboard" name="shell-type">
+<title>CMP - Cool Music Player</title>
+<link href="fonts/hanken-grotesk.css" rel="stylesheet">
+<link href="fonts/space-grotesk.css" rel="stylesheet">
+<link href="fonts/space-mono.css" rel="stylesheet">
+<link href="fonts/material-symbols-outlined.css" rel="stylesheet">
+<style>
+/* Tailwind CSS (minimal subset for our design) */
+@layer base {
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+  body { overscroll-behavior: none; }
+}
+
+:root {
+  --accent-color: #a855f7;
+  --accent-secondary: #ec4899;
+  --accent-glow: rgba(168, 85, 247, 0.22);
+  --ambient-bg-gradient: radial-gradient(circle at 65% 20%, rgba(139, 92, 246, 0.18) 0%, rgba(236, 72, 153, 0.08) 35%, rgba(19, 19, 22, 0) 70%);
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #0e0e11; }
+::-webkit-scrollbar-thumb { background: #282a30; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+
+@keyframes eq-band-1 { 0%, 100% { height: 14%; } 30% { height: 88%; } 70% { height: 42%; } }
+@keyframes eq-band-2 { 0%, 100% { height: 62%; } 25% { height: 18%; } 65% { height: 96%; } }
+@keyframes eq-band-3 { 0%, 100% { height: 35%; } 50% { height: 100%; } 85% { height: 26%; } }
+@keyframes eq-band-4 { 0%, 100% { height: 88%; } 40% { height: 20%; } 75% { height: 92%; } }
+@keyframes eq-band-5 { 0%, 100% { height: 38%; } 45% { height: 82%; } 80% { height: 25%; } }
+@keyframes eq-band-6 { 0%, 100% { height: 72%; } 35% { height: 32%; } 70% { height: 85%; } }
+@keyframes eq-band-7 { 0%, 100% { height: 22%; } 60% { height: 94%; } 90% { height: 46%; } }
+@keyframes eq-band-8 { 0%, 100% { height: 92%; } 30% { height: 36%; } 75% { height: 74%; } }
+
+.anim-eq-1 { animation: eq-band-1 0.72s ease-in-out infinite; }
+.anim-eq-2 { animation: eq-band-2 0.61s ease-in-out infinite 0.08s; }
+.anim-eq-3 { animation: eq-band-3 0.84s ease-in-out infinite 0.16s; }
+.anim-eq-4 { animation: eq-band-4 0.69s ease-in-out infinite 0.22s; }
+.anim-eq-5 { animation: eq-band-5 0.93s ease-in-out infinite 0.04s; }
+.anim-eq-6 { animation: eq-band-6 0.58s ease-in-out infinite 0.28s; }
+.anim-eq-7 { animation: eq-band-7 0.78s ease-in-out infinite 0.12s; }
+.anim-eq-8 { animation: eq-band-8 0.66s ease-in-out infinite 0.19s; }
+
+.paused-anim { animation-play-state: paused !important; }
+
+.ambient-stage-glow {
+  background-image: var(--ambient-bg-gradient);
+  transition: background-image 0.6s ease;
+}
+
+.theme-accent-bg {
+  background-color: var(--accent-color);
+  transition: background-color 0.4s ease;
+}
+
+.theme-accent-text {
+  color: var(--accent-color);
+  transition: color 0.4s ease;
+}
+
+.theme-accent-border {
+  border-color: var(--accent-color);
+  transition: border-color 0.4s ease;
+}
+
+.theme-accent-fill {
+  fill: var(--accent-color);
+  transition: fill 0.4s ease;
+}
+
+.visualizer-bar {
+  background: linear-gradient(180deg, var(--accent-secondary) 0%, var(--accent-color) 70%, #4c1d95 100%);
+  transition: background 0.4s ease;
+}
+
+/* Utility classes */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-1 { flex: 1 1 0%; }
+.flex-shrink-0 { flex-shrink: 0; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.gap-1 { gap: 0.25rem; }
+.gap-1\.5 { gap: 0.375rem; }
+.gap-2 { gap: 0.5rem; }
+.gap-2\.5 { gap: 0.625rem; }
+.gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; }
+.gap-6 { gap: 1.5rem; }
+.gap-8 { gap: 2rem; }
+.space-y-1 > * + * { margin-top: 0.25rem; }
+.space-y-1\.5 > * + * { margin-top: 0.375rem; }
+.space-y-2 > * + * { margin-top: 0.5rem; }
+.space-y-3 > * + * { margin-top: 0.75rem; }
+.min-h-0 { min-height: 0; }
+.min-w-0 { min-width: 0; }
+.w-full { width: 100%; }
+.w-1\/2 { width: 50%; }
+.w-1\/3 { width: 33.3333%; }
+.w-2\/3 { width: 66.6666%; }
+.w-6 { width: 1.5rem; }
+.w-11 { width: 2.75rem; }
+.w-16 { width: 4rem; }
+.w-44 { width: 11rem; }
+.w-52 { width: 13rem; }
+.w-60 { width: 15rem; }
+.w-\[3\%\] { width: 3%; }
+.w-\[32rem\] { width: 32rem; }
+.h-3 { height: 0.75rem; }
+.h-8 { height: 2rem; }
+.h-9 { height: 2.25rem; }
+.h-16 { height: 4rem; }
+.h-44 { height: 11rem; }
+.h-52 { height: 13rem; }
+.h-60 { height: 15rem; }
+.h-\[32rem\] { height: 32rem; }
+.h-screen { height: 100vh; }
+.w-screen { width: 100vw; }
+.w-2\.5 { width: 0.625rem; }
+.h-2\.5 { height: 0.625rem; }
+.h-5 { height: 1.25rem; }
+.w-2\.5 { width: 0.625rem; }
+.h-1\.5 { height: 0.375rem; }
+.w-1\.5 { width: 0.375rem; }
+
+.flex-wrap { flex-wrap: wrap; }
+.overflow-hidden { overflow: hidden; }
+.overflow-y-auto { overflow-y: auto; }
+.overflow-x-hidden { overflow-x: hidden; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.relative { position: relative; }
+.absolute { position: absolute; }
+.inset-0 { inset: 0; }
+.top-0 { top: 0; }
+.left-0 { left: 0; }
+.bottom-0 { bottom: 0; }
+.right-0 { right: 0; }
+.top-2 { top: 0.5rem; }
+.left-2 { left: 0.5rem; }
+.bottom-2 { bottom: 0.5rem; }
+.right-2 { right: 0.5rem; }
+.-top-1 { top: -0.25rem; }
+.-right-16 { right: -4rem; }
+.-top-16 { top: -4rem; }
+.z-10 { z-index: 10; }
+.z-20 { z-index: 20; }
+.z-50 { z-index: 50; }
+
+.px-1\.5 { padding-left: 0.375rem; padding-right: 0.375rem; }
+.px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+.px-2\.5 { padding-left: 0.625rem; padding-right: 0.625rem; }
+.px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+.py-0\.2 { padding-top: 0.05rem; padding-bottom: 0.05rem; }
+.py-0\.5 { padding-top: 0.125rem; padding-bottom: 0.125rem; }
+.py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+.py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
+.py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+.p-2 { padding: 0.5rem; }
+.p-2\.5 { padding: 0.625rem; }
+.p-3 { padding: 0.75rem; }
+.p-4 { padding: 1rem; }
+.p-5 { padding: 1.25rem; }
+.p-6 { padding: 1.5rem; }
+.pt-1 { padding-top: 0.25rem; }
+.pt-3 { padding-top: 0.75rem; }
+.pb-3 { padding-bottom: 0.75rem; }
+.mt-1 { margin-top: 0.25rem; }
+.mt-1\.5 { margin-top: 0.375rem; }
+.mt-3 { margin-top: 0.75rem; }
+.ml-2 { margin-left: 0.5rem; }
+.pl-2 { padding-left: 0.5rem; }
+.mr-3 { margin-right: 0.75rem; }
+.-mr-3 { margin-right: -0.75rem; }
+
+.bg-surface { background-color: #131316; }
+.bg-surface-container-lowest { background-color: #0e0e11; }
+.bg-surface-dim { background-color: #131316; }
+.bg-surface-container-low { background-color: #1b1b1e; }
+.bg-surface-container { background-color: #1f1f22; }
+.bg-surface-container-high { background-color: #2a2a2d; }
+.bg-surface-container-highest { background-color: #353438; }
+.bg-surface-panel { background-color: #17181c; }
+.bg-charcoal-dark { background-color: #0a0a0c; }
+.bg-charcoal-dark\/95 { background-color: rgba(10, 10, 12, 0.95); }
+.bg-surface-container\/40 { background-color: rgba(31, 31, 34, 0.4); }
+.bg-surface-panel\/90 { background-color: rgba(23, 24, 28, 0.9); }
+.bg-surface\/90 { background-color: rgba(19, 19, 22, 0.9); }
+.bg-paper-white { background-color: #f5f4ef; }
+.bg-emerald-500 { background-color: #10b981; }
+.bg-red-600 { background-color: #dc2626; }
+.bg-red-600:hover { background-color: #b91c1c; }
+.hover\:bg-surface-container:hover { background-color: #1f1f22; }
+.hover\:bg-surface-container-high:hover { background-color: #2a2a2d; }
+.hover\:bg-surface-panel:hover { background-color: #17181c; }
+.hover\:bg-red-600:hover { background-color: #dc2626; }
+.hover\:brightness-110:hover { filter: brightness(1.1); }
+.active\:translate-y-0\.5:active { transform: translateY(0.125rem); }
+.shadow-sm { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
+.shadow-md { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+.shadow-2xl { box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); }
+.backdrop-blur-sm { backdrop-filter: blur(4px); }
+
+.border { border-width: 1px; }
+.border-2 { border-width: 2px; }
+.border-b { border-bottom-width: 1px; }
+.border-r { border-right-width: 1px; }
+.border-l-4 { border-left-width: 4px; }
+.border-solid { border-style: solid; }
+.border-dashed { border-style: dashed; }
+.border-surface-border { border-color: #282a30; }
+.border-surface-border\/60 { border-color: rgba(40, 42, 48, 0.6); }
+.border-charcoal-dark { border-color: #0a0a0c; }
+.border-transparent { border-color: transparent; }
+.hover\:border-purple-400\/60:hover { border-color: rgba(192, 132, 252, 0.6); }
+.hover\:border-surface-border:hover { border-color: #282a30; }
+.hover\:border-purple-400:hover { border-color: #c084fc; }
+.group:hover .group-hover\:border-surface-border { border-color: #282a30; }
+
+.rounded-none { border-radius: 0; }
+.rounded-full { border-radius: 9999px; }
+
+.text-surface { color: #131316; }
+.text-on-surface { color: #e4e1e6; }
+.text-on-surface-variant { color: #8e919e; }
+.text-paper-white { color: #f5f4ef; }
+.text-muted-silver { color: #8e919e; }
+.text-tertiary { color: #f3c000; }
+.text-charcoal-dark { color: #0a0a0c; }
+.text-surface-variant { color: #8e919e; }
+.text-white { color: #ffffff; }
+.text-red-600 { color: #dc2626; }
+.hover\:text-paper-white:hover { color: #f5f4ef; }
+.hover\:text-white:hover { color: #ffffff; }
+.hover\:text-purple-300:hover { color: #d8b4fe; }
+.group-hover\:text-paper-white:hover { color: #f5f4ef; }
+.group-hover\:text-purple-300:hover { color: #d8b4fe; }
+.group-hover\:scale-105:hover { transform: scale(1.05); }
+.transition-colors { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+.transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+.transition-transform { transition-property: transform; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+.duration-150 { transition-duration: 150ms; }
+.duration-500 { transition-duration: 500ms; }
+.duration-700 { transition-duration: 700ms; }
+.ease-in-out { transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
+.cursor-pointer { cursor: pointer; }
+.select-none { user-select: none; }
+.pointer-events-none { pointer-events: none; }
+.opacity-25 { opacity: 0.25; }
+.opacity-60 { opacity: 0.6; }
+.shrink-0 { flex-shrink: 0; }
+.font-bold { font-weight: 700; }
+.font-medium { font-weight: 500; }
+.font-normal { font-weight: 400; }
+.text-\[9px\] { font-size: 9px; }
+.text-\[10px\] { font-size: 10px; }
+.text-\[11px\] { font-size: 11px; }
+.text-\[12px\] { font-size: 12px; }
+.text-\[13px\] { font-size: 13px; }
+.text-\[15px\] { font-size: 15px; }
+.text-\[16px\] { font-size: 16px; }
+.text-\[18px\] { font-size: 18px; }
+.text-xs { font-size: 0.75rem; line-height: 1rem; }
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.text-base { font-size: 1rem; line-height: 1.5rem; }
+.text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+.text-2xl { font-size: 1.5rem; line-height: 2rem; }
+.text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+.text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+.leading-tight { line-height: 1.25; }
+.tracking-tight { letter-spacing: -0.025em; }
+.tracking-wide { letter-spacing: 0.025em; }
+.tracking-wider { letter-spacing: 0.05em; }
+.tracking-widest { letter-spacing: 0.1em; }
+.font-body-md { font-family: "Hanken Grotesk", sans-serif; }
+.font-body-sm { font-family: "Hanken Grotesk", sans-serif; }
+.font-headline-sm { font-family: "Space Grotesk", sans-serif; }
+.font-headline-lg { font-family: "Space Grotesk", sans-serif; }
+.font-label-data-md { font-family: "Space Mono", monospace; }
+.font-label-data-lg { font-family: "Space Mono", monospace; }
+.font-label-stamp { font-family: "Space Mono", monospace; }
+
+@media (min-width: 640px) {
+  .sm\:w-52 { width: 13rem; }
+  .sm\:h-52 { height: 13rem; }
+  .sm\:text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+}
+
+@media (min-width: 768px) {
+  .md\:flex-row { flex-direction: row; }
+  .md\:flex-col { flex-direction: column; }
+}
+
+@media (min-width: 1024px) {
+  .lg\:w-60 { width: 15rem; }
+  .lg\:h-60 { height: 15rem; }
+  .lg\:gap-8 { gap: 2rem; }
+  .lg\:p-6 { padding: 1.5rem; }
+  .lg\:text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+}
+
+.max-w-6xl { max-width: 72rem; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+
+.group:hover .group-hover\:text-paper-white { color: #f5f4ef; }
+.group:hover .group-hover\:text-purple-300 { color: #d8b4fe; }
+.group:hover .group-hover\:scale-105 { transform: scale(1.05); }
+.group:hover .group-hover\:border-surface-border { border-color: #282a30; }
+.group:hover .group-hover\:bg-surface-container { background-color: #1f1f22; }
+.group:hover .group-hover\:bg-surface-panel { background-color: #17181c; }
+.group:hover .group-hover\:border-purple-400\/60 { border-color: rgba(192, 132, 252, 0.6); }
+.group:hover .group-hover\:border-surface-border { border-color: #282a30; }
+
+.flex-shrink-0 { flex-shrink: 0; }
+.flex-grow { flex-grow: 1; }
+.min-w-0 { min-width: 0; }
+.w-64 { width: 16rem; }
+
+.text-emerald-500 { color: #10b981; }
+.text-purple-400 { color: #c084fc; }
+.text-purple-200 { color: #e9d5ff; }
+.text-purple-300 { color: #d8b4fe; }
+.text-purple-700 { color: #7e22ce; }
+.text-indigo-200 { color: #c7d2fe; }
+.text-indigo-700 { color: #4338ca; }
+.text-pink-200 { color: #fbcfe8; }
+.text-pink-700 { color: #be185d; }
+.text-amber-200 { color: #fde68a; }
+.text-amber-700 { color: #b45309; }
+.text-emerald-200 { color: #a7f3d0; }
+.text-emerald-700 { color: #047857; }
+.text-pink-900\/60 { background-color: rgba(131, 24, 67, 0.6); }
+.text-indigo-900\/60 { background-color: rgba(49, 46, 129, 0.6); }
+.text-purple-900\/60 { background-color: rgba(88, 28, 135, 0.6); }
+.text-amber-900\/60 { background-color: rgba(120, 53, 15, 0.6); }
+.text-emerald-900\/60 { background-color: rgba(6, 78, 59, 0.6); }
+.bg-purple-900\/60 { background-color: rgba(88, 28, 135, 0.6); }
+.bg-indigo-900\/60 { background-color: rgba(49, 46, 129, 0.6); }
+.bg-pink-900\/60 { background-color: rgba(131, 24, 67, 0.6); }
+.bg-amber-900\/60 { background-color: rgba(120, 53, 15, 0.6); }
+.bg-emerald-900\/60 { background-color: rgba(6, 78, 59, 0.6); }
+.border-purple-700\/60 { border-color: rgba(126, 34, 206, 0.6); }
+.border-indigo-700\/60 { border-color: rgba(67, 56, 202, 0.6); }
+.border-pink-700\/60 { border-color: rgba(190, 24, 93, 0.6); }
+.border-amber-700\/60 { border-color: rgba(180, 83, 9, 0.6); }
+.border-emerald-700\/60 { border-color: rgba(4, 120, 87, 0.6); }
+
+.animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+
+.overflow-hidden { overflow: hidden; }
+.object-cover { object-fit: cover; }
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+
+/* Material Symbols */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-family: 'Material Symbols Outlined';
+}
+</style>
+</head>
+<body class="bg-surface text-on-surface font-body-md select-none h-screen w-screen flex flex-col overflow-hidden">
+<!-- 1. WINDOW TITLEBAR: 100% OFFLINE DESKTOP WINDOW WITH MINIMALIST CONTROLS -->
+<header class="h-9 flex-shrink-0 bg-charcoal-dark border-b border-surface-border flex items-center justify-between px-3 z-50">
+<!-- App Branding & Local Mode indicator -->
+<div class="flex items-center gap-2.5">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-none inline-block theme-accent-bg" id="app-brand-square"></span>
+<span class="font-headline-sm text-sm font-bold text-paper-white tracking-widest">CMP</span>
+</div>
+<span class="text-surface-border text-xs">/</span>
+<span class="font-label-stamp text-[10px] text-muted-silver tracking-wider">COOL MUSIC PLAYER</span>
+<span class="px-1.5 py-0.2 bg-surface-container-high text-tertiary font-label-stamp text-[9px] border border-surface-border">[v1.0 LOCAL EDITION]</span>
+<span class="flex items-center gap-1 text-[10px] text-muted-silver font-label-stamp pl-2">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+        OFFLINE STORAGE
+      </span>
+</div>
+<!-- Minimalist Native Windows Window Controls -->
+<div class="flex items-center -mr-3">
+<button aria-label="Minimize" class="h-9 w-11 flex items-center justify-center text-muted-silver hover:bg-surface-container hover:text-paper-white transition-colors" id="btn-minimize">
+<span class="material-symbols-outlined text-[13px]">remove</span>
+</button>
+<button aria-label="Maximize" class="h-9 w-11 flex items-center justify-center text-muted-silver hover:bg-surface-container hover:text-paper-white transition-colors" id="btn-maximize">
+<span class="material-symbols-outlined text-[12px]">crop_square</span>
+</button>
+<button aria-label="Close" class="h-9 w-11 flex items-center justify-center text-muted-silver hover:bg-red-600 hover:text-white transition-colors" id="btn-close">
+<span class="material-symbols-outlined text-[15px]">close</span>
+</button>
+</div>
+</header>
+<!-- MAIN APPLICATION LAYOUT -->
+<div class="flex flex-1 min-h-0 overflow-hidden">
+<!-- 2. LOCAL FILE ESSENTIALS SIDEBAR -->
+<aside class="w-64 bg-surface-container-lowest border-r border-surface-border flex flex-col justify-between flex-shrink-0 z-20">
+<div class="flex flex-col flex-1 min-h-0">
+<!-- Sidebar Actions Section -->
+<div class="p-3 border-b border-surface-border space-y-2">
+<div class="font-label-stamp text-[10px] text-muted-silver tracking-wider">LOCAL SOURCES</div>
+<button class="w-full flex items-center justify-center gap-2 px-3 py-2 text-white font-label-data-md text-xs font-bold transition-all shadow-sm active:translate-y-0.5 hover:brightness-110 theme-accent-bg" id="sidebar-add-files-btn">
+<span class="material-symbols-outlined text-[16px]">add_circle</span>
+<span class="">+ ADD FILES</span>
+</button>
+<button class="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-surface-container hover:bg-surface-container-high border border-surface-border text-paper-white font-label-data-md text-xs transition-colors" id="sidebar-add-folder-btn">
+<span class="material-symbols-outlined text-[15px] text-tertiary">create_new_folder</span>
+<span class="">+ ADD FOLDER</span>
+</button>
+</div>
+<!-- Local Directory Tree -->
+<div class="flex-1 overflow-y-auto p-2 space-y-1">
+<div class="px-2 py-1 flex items-center justify-between text-[10px] font-label-stamp text-muted-silver">
+<span class="">INDEXED DIRECTORIES</span>
+<span class="text-tertiary" id="dir-count-badge">0 PATHS</span>
+</div>
+<div id="directory-list" class="space-y-1">
+  <!-- Directories will be populated by Python -->
+</div>
+<!-- Drag and Drop Target -->
+<div class="mt-3 p-3 border border-dashed border-surface-border hover:border-purple-400 bg-charcoal-dark text-center cursor-pointer transition-colors" id="drop-zone">
+<span class="material-symbols-outlined text-muted-silver text-xl">file_download</span>
+<div class="font-label-stamp text-[10px] text-paper-white mt-1">DROP AUDIO HERE</div>
+<div class="text-[9px] text-muted-silver font-body-sm mt-0.5">FLAC · DSD · WAV · ALAC · MP3</div>
+</div>
+</div>
+</div>
+<!-- Sidebar Bottom Local Device Info -->
+<div class="p-3 border-t border-surface-border">
+<div class="font-label-stamp text-[10px] text-muted-silver tracking-wider">STORAGE</div>
+<div class="flex items-center justify-between mt-2 text-xs">
+  <span class="text-muted-silver">Library</span>
+  <span class="text-paper-white font-label-data-md" id="library-track-count">0 tracks</span>
+</div>
+<div class="flex items-center justify-between mt-1 text-xs">
+  <span class="text-muted-silver">Playlists</span>
+  <span class="text-paper-white font-label-data-md" id="playlist-count">0</span>
+</div>
+<div class="flex items-center justify-between mt-1 text-xs">
+  <span class="text-muted-silver">Favourites</span>
+  <span class="text-paper-white font-label-data-md" id="favourite-count">0</span>
+</div>
+</div>
+</aside>
+<!-- 3. MAIN CENTER & RIGHT STAGE -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface overflow-hidden ambient-stage-glow" id="main-stage">
+<!-- TOP BAR: HERO IMMERSIVE 'CURRENTLY PLAYING' SECTION -->
+<section class="flex-shrink-0 bg-surface-panel/90 backdrop-blur-sm border-b border-surface-border p-5 lg:p-6 shadow-md relative overflow-hidden">
+<!-- Dynamic Ambient Aura Backlight -->
+<div class="absolute -right-16 -top-16 w-[32rem] h-[32rem] rounded-full blur-[120px] pointer-events-none transition-all duration-700 opacity-30" id="hero-aura-glow" style="background: var(--ambient-bg-gradient);"></div>
+<div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-6 lg:gap-8 relative z-10">
+<!-- LARGE ALBUM ART HERO -->
+<div class="relative w-44 h-44 sm:w-52 sm:h-52 lg:w-60 lg:h-60 flex-shrink-0 bg-charcoal-dark border-2 border-surface-border shadow-2xl group overflow-hidden">
+<img alt="Now Playing Album Art" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" id="hero-album-art" src="assets/placeholder-album.svg">
+<div class="absolute top-2 left-2 px-1.5 py-0.5 bg-charcoal-dark/95 border border-surface-border font-label-stamp text-[9px] tracking-widest theme-accent-text" id="hero-source-tag">
+              OFFLINE MASTER
+            </div>
+<div class="absolute bottom-2 right-2 px-1.5 py-0.5 bg-charcoal-dark/95 border border-surface-border font-label-stamp text-[9px] text-tertiary tracking-widest">
+              LOCAL FILE
+            </div>
+</div>
+<!-- TRACK METADATA + LIVE AUDIO VISUALIZER + SCRUBBER -->
+<div class="flex-1 min-w-0 flex flex-col justify-between w-full space-y-3">
+<!-- Meta & Codec Row -->
+<div class="space-y-2">
+<h1 class="font-headline-lg text-2xl sm:text-3xl lg:text-4xl text-paper-white font-bold tracking-tight truncate leading-tight" id="hero-title">
+                No Track Playing
+              </h1>
+<div class="flex flex-wrap items-center gap-2 text-xs">
+  <span class="font-label-data-md text-tertiary" id="hero-artist">—</span>
+  <span class="text-surface-border">•</span>
+  <span class="font-label-data-md text-muted-silver" id="hero-album">—</span>
+  <span class="text-surface-border">•</span>
+  <span class="font-label-data-md text-muted-silver" id="hero-year">—</span>
+</div>
+<div class="flex flex-wrap items-center gap-2">
+  <span class="px-1.5 py-0.5 bg-surface-container text-muted-silver font-label-stamp text-[9px] border border-surface-border" id="hero-codec-tag">—</span>
+  <span class="px-1.5 py-0.5 bg-surface-container text-muted-silver font-label-stamp text-[9px] border border-surface-border" id="hero-bitrate-tag">—</span>
+  <span class="px-1.5 py-0.5 bg-surface-container text-muted-silver font-label-stamp text-[9px] border border-surface-border" id="hero-tier-tag">—</span>
+</div>
+</div>
+<!-- IMMERSIVE LIVE AUDIO VISUALIZER (Real-time spectrum wave) -->
+<div class="bg-charcoal-dark/95 border border-surface-border p-2.5 flex items-end justify-between gap-1 h-16 w-full relative overflow-hidden" id="visualizer-stage" title="Real-time PCM Audio Visualizer">
+<!-- Frequency bars with dynamic gradient styling -->
+<span class="w-[3%] visualizer-bar anim-eq-1 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-3 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-2 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-4 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-5 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-6 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-7 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-8 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-2 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-4 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-1 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-3 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-5 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-7 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-8 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-2 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-6 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-4 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-3 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-1 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-5 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-7 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-8 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-2 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-4 rounded-none inline-block"></span>
+<!-- Subtle visualizer overlay peak waveform line -->
+<div class="absolute inset-0 pointer-events-none opacity-25 flex items-center justify-center">
+<svg class="w-full h-8" preserveAspectRatio="none" viewBox="0 0 400 30">
+<path d="M0,15 Q50,0 100,15 T200,15 T300,15 T400,15" fill="none" stroke="currentColor" stroke-dasharray="4,4" stroke-width="1" style="color: var(--accent-secondary);"></path>
+</svg>
+</div>
+</div>
+<!-- TACTILE SCRUB BAR -->
+<div class="space-y-1.5 pt-1">
+<div class="relative w-full h-3 bg-charcoal-dark border border-surface-border cursor-pointer group" id="hero-scrub-bar">
+<div class="absolute left-0 top-0 bottom-0 w-0 transition-all group-hover:bg-white theme-accent-bg" id="hero-scrub-fill" style="width: 0%;"></div>
+<div class="absolute left-0 -top-1 w-2.5 h-5 bg-paper-white border border-charcoal-dark shadow-md opacity-0 group-hover:opacity-100 transition-opacity" id="hero-scrub-thumb" style="left: 0%;"></div>
+</div>
+<div class="flex justify-between items-center text-xs font-label-data-md text-muted-silver">
+<span class="text-paper-white font-bold" id="hero-time-current">00:00</span>
+<span class="text-xs font-label-stamp text-muted-silver" id="hero-track-position">TRACK 00 OF 00</span>
+<span id="hero-time-total" class="">00:00</span>
+</div>
+</div>
+<!-- PRIMARY TRANSPORT CONTROLS ROW -->
+<div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+<!-- Left: Shuffle / Repeat -->
+<div class="flex items-center gap-2">
+<button class="h-9 w-9 flex items-center justify-center text-muted-silver hover:bg-surface-container hover:text-paper-white transition-colors rounded-full" id="btn-shuffle" aria-label="Shuffle">
+<span class="material-symbols-outlined text-[20px]">shuffle</span>
+</button>
+<button class="h-9 w-9 flex items-center justify-center text-muted-silver hover:bg-surface-container hover:text-paper-white transition-colors rounded-full" id="btn-repeat" aria-label="Repeat">
+<span class="material-symbols-outlined text-[20px]">repeat</span>
+</button>
+</div>
+<!-- Center: Transport Controls -->
+<div class="flex items-center gap-3">
+<button class="h-12 w-12 flex items-center justify-center text-muted-silver hover:bg-surface-container hover:text-paper-white transition-colors rounded-full" id="btn-prev" aria-label="Previous">
+<span class="material-symbols-outlined text-[24px]">skip_previous</span>
+</button>
+<button class="h-14 w-14 flex items-center justify-center text-paper-white shadow-lg theme-accent-bg rounded-full transition-all hover:scale-105" id="btn-play" aria-label="Play">
+<span class="material-symbols-outlined text-[28px]" id="play-icon">play_arrow</span>
+</button>
+<button class="h-12 w-12 flex items-center justify-center text-muted-silver hover:bg-surface-container hover:text-paper-white transition-colors rounded-full" id="btn-next" aria-label="Next">
+<span class="material-symbols-outlined text-[24px]">skip_next</span>
+</button>
+</div>
+<!-- Right: Volume + Speed -->
+<div class="flex items-center gap-3">
+<!-- Playback Speed -->
+<button class="h-9 w-20 flex items-center justify-center bg-surface-container hover:bg-surface-container-high border border-surface-border text-paper-white font-label-data-md text-xs transition-colors rounded-full" id="btn-speed" aria-label="Playback Speed">
+<span id="speed-label">1.00x</span>
+</button>
+<!-- Tactile Volume Slider -->
+<div class="relative w-36 h-3 bg-charcoal-dark border border-surface-border cursor-pointer group" id="volume-bar">
+<div class="absolute left-0 top-0 bottom-0 w-[70%] transition-all group-hover:bg-white theme-accent-bg" id="volume-fill" style="width: 70%;"></div>
+<div class="absolute left-[70%] -top-1 w-2.5 h-5 bg-paper-white border border-charcoal-dark shadow-md opacity-0 group-hover:opacity-100 transition-opacity" id="volume-thumb" style="left: 70%;"></div>
+</div>
+<span class="font-label-data-md text-xs text-paper-white w-10 text-right" id="volume-label">70%</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- BOTTOM SECTION: LOCAL TRACK QUEUE & ALBUM COLLECTION -->
+<section class="flex-1 flex flex-col min-h-0 p-4 lg:p-6 bg-surface/90 overflow-hidden">
+<!-- Section Bar -->
+<div class="flex items-center justify-between pb-3 border-b border-surface-border flex-shrink-0">
+<div class="flex items-center gap-3">
+<span class="font-headline-sm text-base font-bold text-paper-white tracking-wide">ACTIVE PLAYBACK QUEUE</span>
+<span class="px-2 py-0.5 bg-surface-container text-muted-silver font-label-stamp text-[10px] border border-surface-border" id="queue-count-badge">0 TRACKS LOADED</span>
+</div>
+<!-- Quick Local Search -->
+<div class="relative w-64">
+<input type="text" placeholder="Search queue..." class="w-full h-9 bg-surface-container border border-surface-border pl-9 pr-3 text-paper-white text-xs font-body-md placeholder:text-muted-silver focus:outline-none focus:border-purple-400 transition-colors rounded-full" id="queue-search">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-silver material-symbols-outlined text-[16px]">search</span>
+</div>
+</div>
+<!-- Clean Track List Grid -->
+<div class="flex-1 overflow-y-auto pt-3 space-y-1" id="track-queue-list">
+  <!-- Tracks will be populated by JavaScript -->
+  <div class="flex items-center justify-center h-full text-muted-silver font-label-stamp text-xs">
+    No tracks in queue. Add files or folders to get started.
+  </div>
+</div>
+</section>
+</main>
+</div>
+
+<!-- INTERACTIVE PLAYBACK & DYNAMIC COLOR THEME ENGINE -->
+<script>
+(function() {
+  // Complete track data with true format specifications & dynamic palettes
+  const tracks = [];
+  let currentIndex = -1;
+  let isPlaying = false;
+  let currentProgressSec = 0;
+  let currentDurationSec = 0;
+  let volume = 0.7;
+  let playbackSpeed = 1.0;
+  let shuffleEnabled = false;
+  let repeatMode = 0; // 0=off, 1=all, 2=one
+  let shuffleIndices = [];
+  let audioContext = null;
+  let analyser = null;
+  let sourceNode = null;
+  let audioElement = null;
+  let visualizerAnimationId = null;
+  let progressUpdateInterval = null;
+
+  // DOM Elements
+  const heroAlbumArt = document.getElementById('hero-album-art');
+  const heroTitle = document.getElementById('hero-title');
+  const heroArtist = document.getElementById('hero-artist');
+  const heroAlbum = document.getElementById('hero-album');
+  const heroYear = document.getElementById('hero-year');
+  const heroCodecTag = document.getElementById('hero-codec-tag');
+  const heroBitrateTag = document.getElementById('hero-bitrate-tag');
+  const heroTierTag = document.getElementById('hero-tier-tag');
+  const heroSourceTag = document.getElementById('hero-source-tag');
+  const heroTrackPosition = document.getElementById('hero-track-position');
+  const heroTimeCurrent = document.getElementById('hero-time-current');
+  const heroTimeTotal = document.getElementById('hero-time-total');
+  const heroScrubFill = document.getElementById('hero-scrub-fill');
+  const heroScrubThumb = document.getElementById('hero-scrub-thumb');
+  const heroScrubBar = document.getElementById('hero-scrub-bar');
+  const playBtn = document.getElementById('btn-play');
+  const playIcon = document.getElementById('play-icon');
+  const visualizerStage = document.getElementById('visualizer-stage');
+  const queueList = document.getElementById('track-queue-list');
+  const btnPrev = document.getElementById('btn-prev');
+  const btnNext = document.getElementById('btn-next');
+  const btnShuffle = document.getElementById('btn-shuffle');
+  const btnRepeat = document.getElementById('btn-repeat');
+  const btnSpeed = document.getElementById('btn-speed');
+  const speedLabel = document.getElementById('speed-label');
+  const volumeBar = document.getElementById('volume-bar');
+  const volumeFill = document.getElementById('volume-fill');
+  const volumeThumb = document.getElementById('volume-thumb');
+  const volumeLabel = document.getElementById('volume-label');
+  const searchInput = document.getElementById('queue-search');
+  const queueCountBadge = document.getElementById('queue-count-badge');
+  const dropZone = document.getElementById('drop-zone');
+  const sidebarAddFilesBtn = document.getElementById('sidebar-add-files-btn');
+  const sidebarAddFolderBtn = document.getElementById('sidebar-add-folder-btn');
+
+  // Initialize AudioContext on first user interaction
+  function initAudioContext() {
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
+    }
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
+  }
+
+  function formatTime(secs) {
+    const m = String(Math.floor(secs / 60)).padStart(2, '0');
+    const s = String(Math.floor(secs % 60)).padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  function applyTrackTheme(track) {
+    document.documentElement.style.setProperty('--accent-color', track.accentColor);
+    document.documentElement.style.setProperty('--accent-secondary', track.accentSecondary);
+    document.documentElement.style.setProperty('--ambient-bg-gradient', track.ambientGradient);
+
+    const aura = document.getElementById('hero-aura-glow');
+    if (aura) {
+      aura.style.background = `radial-gradient(circle, ${track.accentColor} 0%, ${track.accentSecondary} 50%, transparent 75%)`;
+    }
+  }
+
+  function clearTrackTheme() {
+    document.documentElement.style.setProperty('--accent-color', '#a855f7');
+    document.documentElement.style.setProperty('--accent-secondary', '#ec4899');
+    document.documentElement.style.setProperty('--ambient-bg-gradient', 'radial-gradient(circle at 65% 20%, rgba(139, 92, 246, 0.18) 0%, rgba(236, 72, 153, 0.08) 35%, rgba(19, 19, 22, 0) 70%)');
+    const aura = document.getElementById('hero-aura-glow');
+    if (aura) {
+      aura.style.background = 'radial-gradient(circle, rgb(168, 85, 247) 0%, rgb(236, 72, 153) 50%, transparent 75%)';
+    }
+  }
+
+  function renderQueue(filter = "") {
+    if (!queueList) return;
+    queueList.innerHTML = "";
+
+    if (tracks.length === 0) {
+      queueList.innerHTML = '<div class="flex items-center justify-center h-full text-muted-silver font-label-stamp text-xs">No tracks in queue. Add files or folders to get started.</div>';
+      return;
+    }
+
+    tracks.forEach((track, index) => {
+      if (filter && !track.title.toLowerCase().includes(filter.toLowerCase()) && !track.artist.toLowerCase().includes(filter.toLowerCase())) {
+        return;
+      }
+
+      const isActive = index === currentIndex;
+      const row = document.createElement('div');
+      
+      if (isActive) {
+        row.className = "flex items-center justify-between px-3 py-2 bg-paper-white text-charcoal-dark font-bold border-l-4 cursor-pointer shadow-md transition-all";
+        row.style.borderLeftColor = track.accentColor;
+        row.innerHTML = `
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-6 flex items-center justify-center" style="color: ${track.accentColor}">
+              <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">volume_up</span>
+            </div>
+            <div class="flex flex-col min-w-0">
+              <span class="font-body-md text-sm font-bold truncate">${String(track.id).padStart(2, '0')}. ${track.title}</span>
+              <span class="font-label-stamp text-[10px] text-surface-variant truncate">${track.artist} • ${track.album}</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <span class="px-1.5 py-0.5 bg-charcoal-dark font-label-stamp text-[9px] border border-charcoal-dark" style="color: ${track.accentColor}">${track.formatBadge}</span>
+            <span class="font-label-data-md text-xs">${track.duration}</span>
+          </div>
+        `;
+      } else {
+        row.className = "group flex items-center justify-between px-3 py-2 hover:bg-surface-panel bg-surface-container/40 border border-transparent hover:border-surface-border text-on-surface cursor-pointer transition-colors";
+        row.innerHTML = `
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="font-label-stamp text-xs text-muted-silver w-6 text-center group-hover:text-paper-white">${String(track.id).padStart(2, '0')}</span>
+            <div class="flex flex-col min-w-0">
+              <span class="font-body-md text-sm text-paper-white truncate group-hover:text-purple-300 transition-colors">${track.title}</span>
+              <span class="font-label-stamp text-[10px] text-muted-silver truncate">${track.artist} • ${track.album}</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <span class="px-1.5 py-0.5 bg-surface-container text-muted-silver font-label-stamp text-[9px] border border-surface-border group-hover:text-paper-white">${track.formatBadge}</span>
+            <span class="font-label-data-md text-xs text-muted-silver">${track.duration}</span>
+          </div>
+        `;
+      }
+
+      row.addEventListener('click', () => {
+        loadTrack(index);
+      });
+
+      queueList.appendChild(row);
+    });
+    
+    updateQueueCount();
+  }
+
+  function updateQueueCount() {
+    if (queueCountBadge) {
+      queueCountBadge.textContent = `${tracks.length} TRACK${tracks.length !== 1 ? 'S' : ''} LOADED`;
+    }
+  }
+
+  function loadTrack(index) {
+    if (index < 0 || index >= tracks.length) return;
+    
+    currentIndex = index;
+    const track = tracks[currentIndex];
+
+    // Stop current playback
+    stopPlayback();
+
+    // Update DOM fields
+    heroTitle.textContent = track.title;
+    heroArtist.textContent = track.artist;
+    heroAlbum.textContent = track.album;
+    heroYear.textContent = track.year;
+    heroCodecTag.textContent = track.formatTag;
+    heroBitrateTag.textContent = track.bitrate;
+    heroTierTag.textContent = track.tier;
+    heroSourceTag.textContent = track.sourceTag;
+    heroAlbumArt.src = track.cover;
+    heroTimeTotal.textContent = track.duration;
+    heroTrackPosition.textContent = `TRACK ${String(track.id).padStart(2, '0')} OF ${String(tracks.length).padStart(2, '0')}`;
+
+    // Reset track progress
+    currentProgressSec = 0;
+    currentDurationSec = track.durationSec;
+    updateProgressUI(0);
+
+    // Dynamic theme adaptation
+    applyTrackTheme(track);
+
+    // Refresh Queue visual state
+    renderQueue(searchInput ? searchInput.value : "");
+
+    // Load audio file
+    loadAudioFile(track);
+  }
+
+  function loadAudioFile(track) {
+    initAudioContext();
+    
+    // For now, we'll use the Python backend to serve the audio file
+    // This will be connected via the pywebview API
+    if (window.pywebview && window.pywebview.api) {
+      window.pywebview.api.get_audio_url(track.path).then(url => {
+        if (url) {
+          playAudioUrl(url, track);
+        }
+      }).catch(err => {
+        console.error('Failed to get audio URL:', err);
+      });
+    }
+  }
+
+  function playAudioUrl(url, track) {
+    if (audioElement) {
+      audioElement.pause();
+      audioElement.src = '';
+      audioElement.load();
+    }
+    
+    audioElement = new Audio();
+    audioElement.src = url;
+    audioElement.crossOrigin = 'anonymous';
+    audioElement.playbackRate = playbackSpeed;
+    audioElement.volume = volume;
+    
+    // Connect to Web Audio API for visualization
+    const source = audioContext.createMediaElementSource(audioElement);
+    source.connect(analyser);
+    analyser.connect(audioContext.destination);
+    sourceNode = source;
+    
+    audioElement.addEventListener('loadedmetadata', () => {
+      currentDurationSec = audioElement.duration;
+      heroTimeTotal.textContent = formatTime(currentDurationSec);
+    });
+    
+    audioElement.addEventListener('timeupdate', () => {
+      if (audioElement.duration) {
+        const pct = audioElement.currentTime / audioElement.duration;
+        updateProgressUI(pct);
+      }
+    });
+    
+    audioElement.addEventListener('ended', () => {
+      handleTrackEnd();
+    });
+    
+    audioElement.addEventListener('error', (e) => {
+      console.error('Audio error:', e);
+    });
+    
+    audioElement.play().catch(err => {
+      console.error('Playback failed:', err);
+      setPlaying(false);
+    });
+    
+    setPlaying(true);
+    startVisualizer();
+    startProgressUpdate();
+  }
+
+  function stopPlayback() {
+    if (audioElement) {
+      audioElement.pause();
+      audioElement.src = '';
+      audioElement.load();
+      audioElement = null;
+    }
+    if (sourceNode) {
+      sourceNode.disconnect();
+      sourceNode = null;
+    }
+    stopVisualizer();
+    stopProgressUpdate();
+    setPlaying(false);
+  }
+
+  function setPlaying(play) {
+    isPlaying = play;
+    if (playIcon) playIcon.textContent = isPlaying ? 'pause' : 'play_arrow';
+    
+    const bars = visualizerStage ? visualizerStage.querySelectorAll('.visualizer-bar') : [];
+    bars.forEach(b => {
+      if (isPlaying) {
+        b.classList.remove('paused-anim');
+      } else {
+        b.classList.add('paused-anim');
+      }
+    });
+  }
+
+  function updateProgressUI(pct) {
+    const percent = Math.max(0, Math.min(100, pct * 100));
+    heroScrubFill.style.width = `${percent}%`;
+    heroScrubThumb.style.left = `${percent}%`;
+    heroTimeCurrent.textContent = formatTime(Math.floor(currentDurationSec * pct));
+  }
+
+  function startProgressUpdate() {
+    stopProgressUpdate();
+    progressUpdateInterval = setInterval(() => {
+      if (audioElement && !audioElement.paused && audioElement.duration) {
+        const pct = audioElement.currentTime / audioElement.duration;
+        updateProgressUI(pct);
+      }
+    }, 200);
+  }
+
+  function stopProgressUpdate() {
+    if (progressUpdateInterval) {
+      clearInterval(progressUpdateInterval);
+      progressUpdateInterval = null;
+    }
+  }
+
+  function startVisualizer() {
+    if (!analyser) return;
+    stopVisualizer();
+    
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    const bars = visualizerStage.querySelectorAll('.visualizer-bar');
+    const barCount = bars.length;
+    
+    function animate() {
+      if (!isPlaying || !analyser) return;
+      
+      analyser.getByteFrequencyData(dataArray);
+      
+      // Map frequency data to bars (24 bars, use first 24 frequency bins)
+      for (let i = 0; i < barCount; i++) {
+        const freqIndex = Math.floor(i * bufferLength / barCount);
+        const value = dataArray[freqIndex] / 255; // 0-1
+        const height = Math.max(5, value * 100); // Minimum 5% for visual
+        bars[i].style.height = `${height}%`;
+      }
+      
+      visualizerAnimationId = requestAnimationFrame(animate);
+    }
+    
+    animate();
+  }
+
+  function stopVisualizer() {
+    if (visualizerAnimationId) {
+      cancelAnimationFrame(visualizerAnimationId);
+      visualizerAnimationId = null;
+    }
+    // Reset bars to default animated state
+    const bars = visualizerStage.querySelectorAll('.visualizer-bar');
+    bars.forEach(b => {
+      b.style.height = '';
+    });
+  }
+
+  function handleTrackEnd() {
+    if (repeatMode === 2) {
+      // Repeat one
+      if (audioElement) {
+        audioElement.currentTime = 0;
+        audioElement.play();
+      }
+    } else {
+      // Next track
+      playNext();
+    }
+  }
+
+  function playNext() {
+    let nextIdx;
+    if (shuffleEnabled && shuffleIndices.length > 0) {
+      const currentShufflePos = shuffleIndices.indexOf(currentIndex);
+      const nextShufflePos = (currentShufflePos + 1) % shuffleIndices.length;
+      nextIdx = shuffleIndices[nextShufflePos];
+    } else {
+      nextIdx = (currentIndex + 1) % tracks.length;
+    }
+    if (nextIdx !== currentIndex || repeatMode === 1) {
+      loadTrack(nextIdx);
+    }
+  }
+
+  function playPrev() {
+    let prevIdx;
+    if (shuffleEnabled && shuffleIndices.length > 0) {
+      const currentShufflePos = shuffleIndices.indexOf(currentIndex);
+      const prevShufflePos = (currentShufflePos - 1 + shuffleIndices.length) % shuffleIndices.length;
+      prevIdx = shuffleIndices[prevShufflePos];
+    } else {
+      prevIdx = (currentIndex - 1 + tracks.length) % tracks.length;
+    }
+    if (prevIdx !== currentIndex || repeatMode === 1) {
+      loadTrack(prevIdx);
+    }
+  }
+
+  function toggleShuffle() {
+    shuffleEnabled = !shuffleEnabled;
+    if (shuffleEnabled) {
+      // Create shuffled indices
+      shuffleIndices = tracks.map((_, i) => i).sort(() => Math.random() - 0.5);
+      btnShuffle.style.color = 'var(--accent-color)';
+      btnShuffle.classList.add('theme-accent-text');
+    } else {
+      shuffleIndices = [];
+      btnShuffle.style.color = '';
+      btnShuffle.classList.remove('theme-accent-text');
+    }
+  }
+
+  function toggleRepeat() {
+    repeatMode = (repeatMode + 1) % 3;
+    if (repeatMode === 1) {
+      // Repeat all
+      btnRepeat.style.color = 'var(--accent-color)';
+      btnRepeat.classList.add('theme-accent-text');
+      btnRepeat.querySelector('.material-symbols-outlined').textContent = 'repeat';
+    } else if (repeatMode === 2) {
+      // Repeat one
+      btnRepeat.style.color = 'var(--accent-color)';
+      btnRepeat.classList.add('theme-accent-text');
+      btnRepeat.querySelector('.material-symbols-outlined').textContent = 'repeat_one';
+    } else {
+      // Off
+      btnRepeat.style.color = '';
+      btnRepeat.classList.remove('theme-accent-text');
+      btnRepeat.querySelector('.material-symbols-outlined').textContent = 'repeat';
+    }
+  }
+
+  function cyclePlaybackSpeed() {
+    const speeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
+    const currentIdx = speeds.indexOf(playbackSpeed);
+    const nextIdx = (currentIdx + 1) % speeds.length;
+    playbackSpeed = speeds[nextIdx];
+    speedLabel.textContent = playbackSpeed.toFixed(2) + 'x';
+    if (audioElement) {
+      audioElement.playbackRate = playbackSpeed;
+    }
+  }
+
+  function setVolume(pct) {
+    volume = Math.max(0, Math.min(1, pct));
+    if (audioElement) {
+      audioElement.volume = volume;
+    }
+    const percent = Math.round(volume * 100);
+    volumeFill.style.width = percent + '%';
+    volumeThumb.style.left = percent + '%';
+    volumeLabel.textContent = percent + '%';
+  }
+
+  // Event Listeners
+  if (playBtn) {
+    playBtn.addEventListener('click', () => {
+      initAudioContext();
+      if (audioElement) {
+        if (isPlaying) {
+          audioElement.pause();
+          setPlaying(false);
+          stopVisualizer();
+          stopProgressUpdate();
+        } else {
+          audioElement.play();
+          setPlaying(true);
+          startVisualizer();
+          startProgressUpdate();
+        }
+      } else if (tracks.length > 0 && currentIndex === -1) {
+        loadTrack(0);
+      }
+    });
+  }
+
+  if (btnNext) {
+    btnNext.addEventListener('click', () => {
+      playNext();
+    });
+  }
+
+  if (btnPrev) {
+    btnPrev.addEventListener('click', () => {
+      playPrev();
+    });
+  }
+
+  if (btnShuffle) {
+    btnShuffle.addEventListener('click', toggleShuffle);
+  }
+
+  if (btnRepeat) {
+    btnRepeat.addEventListener('click', toggleRepeat);
+  }
+
+  if (btnSpeed) {
+    btnSpeed.addEventListener('click', cyclePlaybackSpeed);
+  }
+
+  if (heroScrubBar) {
+    heroScrubBar.addEventListener('click', (e) => {
+      const rect = heroScrubBar.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const pct = Math.max(0, Math.min(1, clickX / rect.width));
+      if (audioElement) {
+        audioElement.currentTime = pct * audioElement.duration;
+      }
+      updateProgressUI(pct);
+    });
+  }
+
+  if (volumeBar) {
+    volumeBar.addEventListener('click', (e) => {
+      const rect = volumeBar.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const pct = Math.max(0, Math.min(1, clickX / rect.width));
+      setVolume(pct);
+    });
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      renderQueue(e.target.value);
+    });
+  }
+
+  // Drag and drop
+  if (dropZone) {
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, preventDefaults, false);
+      document.body.addEventListener(eventName, preventDefaults, false);
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, unhighlight, false);
+    });
+
+    dropZone.addEventListener('drop', handleDrop, false);
+  }
+
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  function highlight(e) {
+    dropZone.classList.add('border-purple-400');
+    dropZone.classList.remove('border-surface-border');
+  }
+
+  function unhighlight(e) {
+    dropZone.classList.remove('border-purple-400');
+    dropZone.classList.add('border-surface-border');
+  }
+
+  function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    handleFiles(files);
+  }
+
+  function handleFiles(files) {
+    const audioFiles = Array.from(files).filter(f => {
+      const ext = f.name.toLowerCase().split('.').pop();
+      return ['flac', 'mp3', 'wav', 'ogg', 'opus', 'm4a', 'aac', 'dsf', 'dff'].includes(ext);
+    });
+    
+    if (audioFiles.length > 0 && window.pywebview && window.pywebview.api) {
+      const paths = audioFiles.map(f => f.path || f.webkitRelativePath);
+      window.pywebview.api.add_tracks(paths).then(result => {
+        if (result && result.tracks) {
+          addTracksToQueue(result.tracks);
+        }
+      }).catch(err => {
+        console.error('Failed to add tracks:', err);
+      });
+    }
+  }
+
+  if (sidebarAddFilesBtn) {
+    sidebarAddFilesBtn.addEventListener('click', () => {
+      if (window.pywebview && window.pywebview.api) {
+        window.pywebview.api.select_files().then(result => {
+          if (result && result.paths) {
+            window.pywebview.api.add_tracks(result.paths).then(r => {
+              if (r && r.tracks) {
+                addTracksToQueue(r.tracks);
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+
+  if (sidebarAddFolderBtn) {
+    sidebarAddFolderBtn.addEventListener('click', () => {
+      if (window.pywebview && window.pywebview.api) {
+        window.pywebview.api.select_folder().then(result => {
+          if (result && result.path) {
+            window.pywebview.api.add_folder(result.path).then(r => {
+              if (r && r.tracks) {
+                addTracksToQueue(r.tracks);
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+
+  function addTracksToQueue(newTracks) {
+    let addedCount = 0;
+    newTracks.forEach(nt => {
+      // Check if already in queue (by path)
+      const exists = tracks.some(t => t.path === nt.path);
+      if (!exists) {
+        const id = tracks.length + 1;
+        tracks.push({
+          id,
+          title: nt.title || 'Unknown Title',
+          artist: nt.artist || 'Unknown Artist',
+          album: nt.album || 'Unknown Album',
+          year: nt.year || '—',
+          formatTag: nt.formatTag || 'Unknown',
+          formatBadge: nt.formatBadge || 'UNKNOWN',
+          bitrate: nt.bitrate || '—',
+          tier: nt.tier || '—',
+          sourceTag: nt.sourceTag || 'LOCAL FILE',
+          duration: nt.duration || '00:00',
+          durationSec: nt.durationSec || 0,
+          cover: nt.cover || 'assets/placeholder-album.svg',
+          accentColor: nt.accentColor || '#a855f7',
+          accentSecondary: nt.accentSecondary || '#ec4899',
+          badgeColor: nt.badgeColor || 'bg-purple-900/60 text-purple-200 border-purple-700/60',
+          ambientGradient: nt.ambientGradient || 'radial-gradient(circle at 65% 20%, rgba(139, 92, 246, 0.22) 0%, rgba(236, 72, 153, 0.10) 40%, rgba(19, 19, 22, 0) 70%)',
+          path: nt.path
+        });
+        addedCount++;
+      }
+    });
+    
+    if (addedCount > 0) {
+      renderQueue();
+      if (currentIndex === -1) {
+        loadTrack(0);
+      }
+    }
+  }
+
+  // Window controls
+  document.getElementById('btn-minimize').addEventListener('click', () => {
+    if (window.pywebview && window.pywebview.api) {
+      window.pywebview.api.minimize_window();
+    }
+  });
+
+  document.getElementById('btn-maximize').addEventListener('click', () => {
+    if (window.pywebview && window.pywebview.api) {
+      window.pywebview.api.maximize_window();
+    }
+  });
+
+  document.getElementById('btn-close').addEventListener('click', () => {
+    if (window.pywebview && window.pywebview.api) {
+      window.pywebview.api.close_window();
+    }
+  });
+
+  // Initial setup
+  renderQueue();
+  clearTrackTheme();
+  
+  // Expose functions for Python backend
+  window.cmp = {
+    addTracks: addTracksToQueue,
+    setTracks: (newTracks) => {
+      tracks.length = 0;
+      tracks.push(...newTracks);
+      renderQueue();
+      if (currentIndex === -1 && tracks.length > 0) {
+        loadTrack(0);
+      }
+    },
+    playTrack: (index) => loadTrack(index),
+    playPause: () => {
+      if (audioElement) {
+        if (isPlaying) {
+          audioElement.pause();
+          setPlaying(false);
+          stopVisualizer();
+          stopProgressUpdate();
+        } else {
+          audioElement.play();
+          setPlaying(true);
+          startVisualizer();
+          startProgressUpdate();
+        }
+      }
+    },
+    nextTrack: playNext,
+    prevTrack: playPrev,
+    setVolume: setVolume,
+    getState: () => ({
+      currentIndex,
+      isPlaying,
+      volume,
+      playbackSpeed,
+      shuffleEnabled,
+      repeatMode,
+      currentTrack: currentIndex >= 0 ? tracks[currentIndex] : null,
+      queue: tracks.map(t => ({ id: t.id, title: t.title, artist: t.artist, path: t.path }))
+    })
+  };
+})();
+</script>
+</body>
+</html>

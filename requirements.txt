@@ -1,0 +1,4 @@
+pywebview[webview2]>=5.0
+mutagen>=1.47
+pillow>=10.0
+watchdog>=4.0

@@ -1,0 +1,63 @@
+/* Font definitions for CMP - Using system fonts as fallback, with @font-face for local files */
+/* Download the actual font files and place them in this directory for production */
+
+/* Hanken Grotesk - Variable font */
+@font-face {
+  font-family: 'Hanken Grotesk';
+  src: local('Hanken Grotesk'), local('HankenGrotesk-VariableFont_wght'),
+       url('HankenGrotesk-VariableFont_wght.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-display: swap;
+  font-style: normal;
+}
+
+/* Space Grotesk - Variable font */
+@font-face {
+  font-family: 'Space Grotesk';
+  src: local('Space Grotesk'), local('SpaceGrotesk-VariableFont_wght'),
+       url('SpaceGrotesk-VariableFont_wght.woff2') format('woff2-variations');
+  font-weight: 300 700;
+  font-display: swap;
+  font-style: normal;
+}
+
+/* Space Mono */
+@font-face {
+  font-family: 'Space Mono';
+  src: local('Space Mono'), local('SpaceMono-Regular'),
+       url('SpaceMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Space Mono';
+  src: local('Space Mono Bold'), local('SpaceMono-Bold'),
+       url('SpaceMono-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+  font-style: normal;
+}
+
+/* System font fallbacks - these will be used if local fonts aren't available */
+@font-face {
+  font-family: 'Hanken Grotesk Fallback';
+  src: local('Segoe UI'), local('system-ui'), local('-apple-system'), local('BlinkMacSystemFont');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Space Grotesk Fallback';
+  src: local('Segoe UI'), local('system-ui'), local('-apple-system'), local('BlinkMacSystemFont');
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Space Mono Fallback';
+  src: local('Consolas'), local('Monospace'), local('Courier New');
+  font-weight: 400 700;
+  font-display: swap;
+}
