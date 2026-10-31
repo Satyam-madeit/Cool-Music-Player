@@ -11,9 +11,6 @@ import threading
 import webview
 from pathlib import Path
 
-# Increase recursion limit for pywebview
-sys.setrecursionlimit(10000)
-
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent / 'backend'))
 
@@ -31,7 +28,19 @@ def get_app_data_dir():
     return Path(base) / 'CMP'
 
 
+def _rotate_import_log():
+    """Clear import_debug.log at start of a new session."""
+    log_path = Path(__file__).resolve().parent / 'import_debug.log'
+    try:
+        log_path.write_text('', encoding='utf-8')
+    except Exception:
+        pass
+
+
 def main():
+    # Rotate diagnostic log for this session
+    _rotate_import_log()
+    
     # Setup app data directory
     app_data_dir = get_app_data_dir()
     app_data_dir.mkdir(parents=True, exist_ok=True)
@@ -43,6 +52,13 @@ def main():
     # Start audio HTTP server in background
     audio_server = AudioServer(library_manager)
     audio_server.start()
+    
+    # Write the audio server port to a file for diagnostic scripts
+    try:
+        port_file = Path(__file__).resolve().parent / 'audio_port.txt'
+        port_file.write_text(str(audio_server._port))
+    except Exception:
+        pass
     
     # Create API bridge
     api = CMPApi(library_manager, audio_server)

@@ -599,6 +599,17 @@
 <!-- INTERACTIVE PLAYBACK & DYNAMIC COLOR THEME ENGINE -->
 <script>
 (function() {
+  // Diagnostic logging bridge: forward any console.log that starts with '[IMPORT]' or '[AUDIO]' to Python
+  const _origConsoleLog = console.log;
+  console.log = function(...args) {
+    if (args.length > 0 && typeof args[0] === 'string' && (args[0].startsWith('[IMPORT]') || args[0].startsWith('[AUDIO]'))) {
+      const msg = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ');
+      if (window.pywebview && window.pywebview.api && window.pywebview.api.log) {
+        window.pywebview.api.log(msg);
+      }
+    }
+    _origConsoleLog.apply(console, args);
+  };
   // Complete track data with true format specifications & dynamic palettes
   const tracks = [];
   let currentIndex = -1;
@@ -660,9 +671,25 @@
       analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
       analyser.smoothingTimeConstant = 0.8;
+      console.log('[AUDIO] AudioContext created, sampleRate:', audioContext.sampleRate);
+      // Log codec support
+      const a = document.createElement('audio');
+      console.log('[AUDIO] canPlayType audio/mpeg:', a.canPlayType('audio/mpeg'));
+      console.log('[AUDIO] canPlayType audio/mp3:', a.canPlayType('audio/mp3'));
+      console.log('[AUDIO] canPlayType audio/wav:', a.canPlayType('audio/wav'));
+      console.log('[AUDIO] canPlayType audio/flac:', a.canPlayType('audio/flac'));
+      console.log('[AUDIO] canPlayType audio/ogg:', a.canPlayType('audio/ogg'));
+      console.log('[AUDIO] canPlayType audio/opus:', a.canPlayType('audio/opus'));
     }
     if (audioContext.state === 'suspended') {
-      audioContext.resume();
+      console.log('[AUDIO] AudioContext suspended, resuming...');
+      audioContext.resume().then(() => {
+        console.log('[AUDIO] AudioContext resumed, state:', audioContext.state);
+      }).catch(err => {
+        console.log('[AUDIO] AudioContext resume failed:', err);
+      });
+    } else {
+      console.log('[AUDIO] AudioContext state:', audioContext.state);
     }
   }
 
@@ -676,32 +703,133 @@
     document.documentElement.style.setProperty('--accent-color', track.accentColor);
     document.documentElement.style.setProperty('--accent-secondary', track.accentSecondary);
     document.documentElement.style.setProperty('--ambient-bg-gradient', track.ambientGradient);
-
-    const aura = document.getElementById('hero-aura-glow');
-    if (aura) {
-      aura.style.background = `radial-gradient(circle, ${track.accentColor} 0%, ${track.accentSecondary} 50%, transparent 75%)`;
-    }
   }
 
   function clearTrackTheme() {
     document.documentElement.style.setProperty('--accent-color', '#a855f7');
     document.documentElement.style.setProperty('--accent-secondary', '#ec4899');
     document.documentElement.style.setProperty('--ambient-bg-gradient', 'radial-gradient(circle at 65% 20%, rgba(139, 92, 246, 0.18) 0%, rgba(236, 72, 153, 0.08) 35%, rgba(19, 19, 22, 0) 70%)');
-    const aura = document.getElementById('hero-aura-glow');
-    if (aura) {
-      aura.style.background = 'radial-gradient(circle, rgb(168, 85, 247) 0%, rgb(236, 72, 153) 50%, transparent 75%)';
+  }
+
+  // Palette extraction cache
+  const paletteCache = new Map();
+
+  function extractPaletteFromImage(img) {
+    return new Promise((resolve) => {
+      if (paletteCache.has(img.src)) {
+        resolve(paletteCache.get(img.src));
+        return;
+      }
+      // Use a small canvas to sample the image
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const size = 50; // downscale for speed
+      canvas.width = size;
+      canvas.height = size;
+      ctx.drawImage(img, 0, 0, size, size);
+      const data = ctx.getImageData(0, 0, size, size).data;
+      let r = 0, g = 0, b = 0, count = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        const alpha = data[i + 3];
+        if (alpha > 128) { // ignore transparent
+          r += data[i];
+          g += data[i + 1];
+          b += data[i + 2];
+          count++;
+        }
+      }
+      if (count === 0) {
+        // fallback
+        resolve({ accent: '#a855f7', secondary: '#ec4899', gradient: 'radial-gradient(circle at 65% 20%, rgba(139, 92, 246, 0.18) 0%, rgba(236, 72, 153, 0.08) 35%, rgba(19, 19, 22, 0) 70%)' });
+        return;
+      }
+      r = Math.round(r / count);
+      g = Math.round(g / count);
+      b = Math.round(b / count);
+      const accent = `rgb(${r},${g},${b})`;
+      // secondary: shift hue slightly (simple approach)
+      const secondary = `rgb(${Math.min(255, r + 40)},${Math.max(0, g - 40)},${Math.min(255, b + 40)})`;
+      const gradient = `radial-gradient(circle at 65% 20%, rgba(${r},${g},${b},0.22) 0%, rgba(${Math.min(255,r+40)},${Math.max(0,g-40)},${Math.min(255,b+40)},0.10) 40%, rgba(19,19,22,0) 70%)`;
+      const palette = { accent, secondary, gradient };
+      paletteCache.set(img.src, palette);
+      resolve(palette);
+    });
+  }
+
+  async function applyTrackThemeFromArtwork(track) {
+    // If track already has accentColor (from backend), use it; else extract from artwork
+    if (track.accentColor && track.accentSecondary && track.ambientGradient) {
+      applyTrackTheme(track);
+      return;
+    }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = track.cover;
+    if (img.complete) {
+      const palette = await extractPaletteFromImage(img);
+      track.accentColor = palette.accent;
+      track.accentSecondary = palette.secondary;
+      track.ambientGradient = palette.gradient;
+      applyTrackTheme(track);
+    } else {
+      img.onload = async () => {
+        const palette = await extractPaletteFromImage(img);
+        track.accentColor = palette.accent;
+        track.accentSecondary = palette.secondary;
+        track.ambientGradient = palette.gradient;
+        applyTrackTheme(track);
+      };
+    }
+  }
+
+  // Library stats refresh
+  async function refreshLibraryStats() {
+    if (!window.pywebview || !window.pywebview.api) return;
+    try {
+      const stats = await window.pywebview.api.get_library_stats();
+      const libTrackEl = document.getElementById('library-track-count');
+      const plCountEl = document.getElementById('playlist-count');
+      const favCountEl = document.getElementById('favourite-count');
+      if (libTrackEl) libTrackEl.textContent = `${stats.trackCount} tracks`;
+      if (plCountEl) plCountEl.textContent = stats.playlistCount;
+      if (favCountEl) favCountEl.textContent = stats.favouriteCount;
+      // Directories
+      const dirs = await window.pywebview.api.get_directories();
+      const dirBadge = document.getElementById('dir-count-badge');
+      const dirList = document.getElementById('directory-list');
+      if (dirBadge) dirBadge.textContent = `${dirs.directories.length} PATHS`;
+      if (dirList) {
+        dirList.innerHTML = '';
+        dirs.directories.forEach(d => {
+          const div = document.createElement('div');
+          div.className = 'group flex items-center justify-between px-2.5 py-1.5 hover:bg-surface-container border border-transparent hover:border-surface-border text-on-surface text-xs cursor-pointer';
+          div.innerHTML = `
+            <div class="flex items-center gap-2 truncate">
+              <span class="material-symbols-outlined text-[15px] theme-accent-text">folder</span>
+              <span class="font-label-data-md truncate">${d.name}</span>
+            </div>
+            <span class="text-[10px] font-label-stamp text-muted-silver shrink-0">${d.trackCount}</span>
+          `;
+          dirList.appendChild(div);
+        });
+      }
+    } catch (e) {
+      console.error('Failed to refresh library stats', e);
     }
   }
 
   function renderQueue(filter = "") {
+    console.log('[IMPORT] renderQueue called, tracks count:', tracks.length, 'filter:', filter);
     if (!queueList) return;
     queueList.innerHTML = "";
 
     if (tracks.length === 0) {
+      console.log('[IMPORT] no tracks to render, showing empty message');
       queueList.innerHTML = '<div class="flex items-center justify-center h-full text-muted-silver font-label-stamp text-xs">No tracks in queue. Add files or folders to get started.</div>';
       return;
     }
 
+    let rendered = 0;
     tracks.forEach((track, index) => {
       if (filter && !track.title.toLowerCase().includes(filter.toLowerCase()) && !track.artist.toLowerCase().includes(filter.toLowerCase())) {
         return;
@@ -750,8 +878,10 @@
       });
 
       queueList.appendChild(row);
+      rendered++;
     });
     
+    console.log('[IMPORT] renderQueue rendered', rendered, 'rows');
     updateQueueCount();
   }
 
@@ -789,7 +919,7 @@
     updateProgressUI(0);
 
     // Dynamic theme adaptation
-    applyTrackTheme(track);
+    applyTrackThemeFromArtwork(track);
 
     // Refresh Queue visual state
     renderQueue(searchInput ? searchInput.value : "");
@@ -805,17 +935,24 @@
     // This will be connected via the pywebview API
     if (window.pywebview && window.pywebview.api) {
       window.pywebview.api.get_audio_url(track.path).then(url => {
+        console.log('[AUDIO] Got audio URL:', url);
         if (url) {
           playAudioUrl(url, track);
+        } else {
+          console.log('[AUDIO] Empty audio URL');
         }
       }).catch(err => {
-        console.error('Failed to get audio URL:', err);
+        console.log('[AUDIO] Failed to get audio URL:', err);
       });
+    } else {
+      console.log('[AUDIO] pywebview API not available');
     }
   }
 
   function playAudioUrl(url, track) {
+    console.log('[AUDIO] playAudioUrl called with URL:', url);
     if (audioElement) {
+      console.log('[AUDIO] Stopping previous audio element');
       audioElement.pause();
       audioElement.src = '';
       audioElement.load();
@@ -827,17 +964,29 @@
     audioElement.playbackRate = playbackSpeed;
     audioElement.volume = volume;
     
-    // Connect to Web Audio API for visualization
-    const source = audioContext.createMediaElementSource(audioElement);
-    source.connect(analyser);
-    analyser.connect(audioContext.destination);
-    sourceNode = source;
-    
+    // Log audio element events
+    audioElement.addEventListener('loadstart', () => console.log('[AUDIO] loadstart'));
+    audioElement.addEventListener('progress', () => console.log('[AUDIO] progress, buffered:', audioElement.buffered.length));
+    audioElement.addEventListener('suspend', () => console.log('[AUDIO] suspend'));
+    audioElement.addEventListener('abort', () => console.log('[AUDIO] abort'));
+    audioElement.addEventListener('error', (e) => {
+      console.log('[AUDIO] error event:', e, 'error code:', audioElement.error ? audioElement.error.code : 'none');
+    });
+    audioElement.addEventListener('stalled', () => console.log('[AUDIO] stalled'));
     audioElement.addEventListener('loadedmetadata', () => {
+      console.log('[AUDIO] loadedmetadata, duration:', audioElement.duration, 'readyState:', audioElement.readyState);
       currentDurationSec = audioElement.duration;
       heroTimeTotal.textContent = formatTime(currentDurationSec);
     });
-    
+    audioElement.addEventListener('loadeddata', () => console.log('[AUDIO] loadeddata, readyState:', audioElement.readyState));
+    audioElement.addEventListener('canplay', () => console.log('[AUDIO] canplay, readyState:', audioElement.readyState));
+    audioElement.addEventListener('canplaythrough', () => console.log('[AUDIO] canplaythrough, readyState:', audioElement.readyState));
+    audioElement.addEventListener('playing', () => console.log('[AUDIO] playing, currentTime:', audioElement.currentTime));
+    audioElement.addEventListener('pause', () => console.log('[AUDIO] pause, currentTime:', audioElement.currentTime));
+    audioElement.addEventListener('ended', () => {
+      console.log('[AUDIO] ended');
+      handleTrackEnd();
+    });
     audioElement.addEventListener('timeupdate', () => {
       if (audioElement.duration) {
         const pct = audioElement.currentTime / audioElement.duration;
@@ -845,18 +994,32 @@
       }
     });
     
-    audioElement.addEventListener('ended', () => {
-      handleTrackEnd();
-    });
+    // Log audio element properties after src set
+    console.log('[AUDIO] audioElement.currentSrc:', audioElement.currentSrc);
+    console.log('[AUDIO] audioElement.networkState:', audioElement.networkState);
+    console.log('[AUDIO] audioElement.readyState:', audioElement.readyState);
+    console.log('[AUDIO] audioElement.duration:', audioElement.duration);
+    console.log('[AUDIO] audioElement.paused:', audioElement.paused);
+    if (audioElement.error) {
+      console.log('[AUDIO] audioElement.error.code:', audioElement.error.code, 'message:', audioElement.error.message);
+    }
     
-    audioElement.addEventListener('error', (e) => {
-      console.error('Audio error:', e);
-    });
+    // Connect to Web Audio API for visualization
+    const source = audioContext.createMediaElementSource(audioElement);
+    source.connect(analyser);
+    analyser.connect(audioContext.destination);
+    sourceNode = source;
     
-    audioElement.play().catch(err => {
-      console.error('Playback failed:', err);
-      setPlaying(false);
-    });
+    console.log('[AUDIO] Starting playback...');
+    const playPromise = audioElement.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        console.log('[AUDIO] play() resolved, playback started');
+      }).catch(err => {
+        console.log('[AUDIO] play() rejected:', err);
+        setPlaying(false);
+      });
+    }
     
     setPlaying(true);
     startVisualizer();
@@ -878,6 +1041,78 @@
     stopProgressUpdate();
     setPlaying(false);
   }
+
+  // Diagnostic: plain HTMLAudioElement playback without Web Audio graph
+  function testPlainPlayback(url) {
+    console.log('[AUDIO][TEST] Starting plain playback test for URL:', url);
+    const testAudio = new Audio();
+    testAudio.src = url;
+    testAudio.crossOrigin = 'anonymous';
+    testAudio.volume = volume;
+    testAudio.playbackRate = playbackSpeed;
+    testAudio.addEventListener('loadstart', () => console.log('[AUDIO][TEST] loadstart'));
+    testAudio.addEventListener('progress', () => console.log('[AUDIO][TEST] progress, buffered:', testAudio.buffered.length));
+    testAudio.addEventListener('suspend', () => console.log('[AUDIO][TEST] suspend'));
+    testAudio.addEventListener('abort', () => console.log('[AUDIO][TEST] abort'));
+    testAudio.addEventListener('error', (e) => {
+      console.log('[AUDIO][TEST] error event:', e, 'error code:', testAudio.error ? testAudio.error.code : 'none', 'message:', testAudio.error ? testAudio.error.message : '');
+    });
+    testAudio.addEventListener('stalled', () => console.log('[AUDIO][TEST] stalled'));
+    testAudio.addEventListener('loadedmetadata', () => console.log('[AUDIO][TEST] loadedmetadata, duration:', testAudio.duration, 'readyState:', testAudio.readyState));
+    testAudio.addEventListener('loadeddata', () => console.log('[AUDIO][TEST] loadeddata, readyState:', testAudio.readyState));
+    testAudio.addEventListener('canplay', () => console.log('[AUDIO][TEST] canplay, readyState:', testAudio.readyState));
+    testAudio.addEventListener('canplaythrough', () => console.log('[AUDIO][TEST] canplaythrough, readyState:', testAudio.readyState));
+    testAudio.addEventListener('playing', () => console.log('[AUDIO][TEST] playing, currentTime:', testAudio.currentTime));
+    testAudio.addEventListener('pause', () => console.log('[AUDIO][TEST] pause, currentTime:', testAudio.currentTime));
+    testAudio.addEventListener('ended', () => console.log('[AUDIO][TEST] ended'));
+    testAudio.addEventListener('timeupdate', () => {
+      if (testAudio.duration) {
+        const pct = testAudio.currentTime / testAudio.duration;
+        console.log('[AUDIO][TEST] timeupdate, pct:', pct.toFixed(3));
+      }
+    });
+    console.log('[AUDIO][TEST] testAudio.currentSrc:', testAudio.currentSrc);
+    console.log('[AUDIO][TEST] testAudio.networkState:', testAudio.networkState);
+    console.log('[AUDIO][TEST] testAudio.readyState:', testAudio.readyState);
+    console.log('[AUDIO][TEST] testAudio.duration:', testAudio.duration);
+    console.log('[AUDIO][TEST] testAudio.paused:', testAudio.paused);
+    if (testAudio.error) {
+      console.log('[AUDIO][TEST] testAudio.error.code:', testAudio.error.code, 'message:', testAudio.error.message);
+    }
+    const promise = testAudio.play();
+    if (promise) {
+      promise.then(() => console.log('[AUDIO][TEST] play() resolved')).catch(err => console.log('[AUDIO][TEST] play() rejected:', err));
+    }
+  }
+
+  // Keydown listener for diagnostic test (press 't' to test plain playback of current track)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 't' || e.key === 'T') {
+      e.preventDefault();
+      if (currentIndex >= 0 && tracks[currentIndex]) {
+        const track = tracks[currentIndex];
+        if (track.path) {
+          // get audio URL via backend
+          if (window.pywebview && window.pywebview.api) {
+            window.pywebview.api.get_audio_url(track.path).then(url => {
+              if (url) {
+                console.log('[AUDIO][TEST] Triggered plain test for track:', track.title);
+                testPlainPlayback(url);
+              } else {
+                console.log('[AUDIO][TEST] No audio URL returned');
+              }
+            }).catch(err => console.log('[AUDIO][TEST] Failed to get audio URL:', err));
+          } else {
+            console.log('[AUDIO][TEST] pywebview API not available');
+          }
+        } else {
+          console.log('[AUDIO][TEST] Current track has no path');
+        }
+      } else {
+        console.log('[AUDIO][TEST] No track selected');
+      }
+    }
+  });
 
   function setPlaying(play) {
     isPlaying = play;
@@ -1186,37 +1421,66 @@
 
   if (sidebarAddFilesBtn) {
     sidebarAddFilesBtn.addEventListener('click', () => {
+      console.log('[IMPORT] Add Files button clicked');
       if (window.pywebview && window.pywebview.api) {
-        window.pywebview.api.select_files().then(result => {
-          if (result && result.paths) {
-            window.pywebview.api.add_tracks(result.paths).then(r => {
-              if (r && r.tracks) {
-                addTracksToQueue(r.tracks);
-              }
-            });
-          }
-        });
+        window.pywebview.api.select_files()
+          .then(result => {
+            console.log('[IMPORT] select_files returned', result);
+            if (result && result.paths && result.paths.length) {
+              console.log('[IMPORT] calling add_tracks with', result.paths.length, 'paths');
+              return window.pywebview.api.add_tracks(result.paths);
+            }
+            console.log('[IMPORT] no paths selected');
+            return Promise.resolve({tracks: []});
+          })
+          .then(r => {
+            console.log('[IMPORT] add_tracks response', r);
+            if (r && r.tracks && r.tracks.length) {
+              console.log('[IMPORT] got', r.tracks.length, 'tracks from backend');
+              addTracksToQueue(r.tracks);
+            } else {
+              console.log('[IMPORT] no tracks returned');
+            }
+          })
+          .catch(err => {
+            console.error('[IMPORT] Add files failed:', err);
+          });
       }
     });
   }
 
   if (sidebarAddFolderBtn) {
     sidebarAddFolderBtn.addEventListener('click', () => {
+      console.log('[IMPORT] Add Folder button clicked');
       if (window.pywebview && window.pywebview.api) {
-        window.pywebview.api.select_folder().then(result => {
-          if (result && result.path) {
-            window.pywebview.api.add_folder(result.path).then(r => {
-              if (r && r.tracks) {
-                addTracksToQueue(r.tracks);
-              }
-            });
-          }
-        });
+        window.pywebview.api.select_folder()
+          .then(result => {
+            console.log('[IMPORT] select_folder returned', result);
+            if (result && result.path) {
+              console.log('[IMPORT] calling add_folder with path', result.path);
+              return window.pywebview.api.add_folder(result.path);
+            }
+            console.log('[IMPORT] no folder selected');
+            return Promise.resolve({tracks: []});
+          })
+          .then(r => {
+            console.log('[IMPORT] add_folder response', r);
+            if (r && r.tracks && r.tracks.length) {
+              console.log('[IMPORT] got', r.tracks.length, 'tracks from backend');
+              addTracksToQueue(r.tracks);
+            } else {
+              console.log('[IMPORT] no tracks returned');
+            }
+          })
+          .catch(err => {
+            console.error('[IMPORT] Add folder failed:', err);
+          });
       }
     });
   }
 
   function addTracksToQueue(newTracks) {
+    console.log('[IMPORT] addTracksToQueue called with', newTracks.length, 'tracks');
     let addedCount = 0;
     newTracks.forEach(nt => {
       // Check if already in queue (by path)
@@ -1244,11 +1508,16 @@
           path: nt.path
         });
         addedCount++;
+        console.log('[IMPORT]   added track:', nt.title, '-', nt.artist);
+      } else {
+        console.log('[IMPORT]   duplicate skipped:', nt.path);
       }
     });
     
+    console.log('[IMPORT] addTracksToQueue added', addedCount, 'new tracks, total tracks now', tracks.length);
     if (addedCount > 0) {
       renderQueue();
+      refreshLibraryStats();
       if (currentIndex === -1) {
         loadTrack(0);
       }
@@ -1277,6 +1546,7 @@
   // Initial setup
   renderQueue();
   clearTrackTheme();
+  refreshLibraryStats();
   
   // Expose functions for Python backend
   window.cmp = {

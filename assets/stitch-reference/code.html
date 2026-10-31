@@ -1,0 +1,684 @@
+<!DOCTYPE html><html class="dark" lang="en" style="--accent-color: #a855f7; --accent-secondary: #ec4899; --ambient-bg-gradient: radial-gradient(circle at 65% 20%, rgba(139, 92, 246, 0.22) 0%, rgba(236, 72, 153, 0.10) 40%, rgba(19, 19, 22, 0) 70%);"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="web_dashboard" name="shell-type">
+<title>CMP - Cool Music Player</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@100..900&amp;family=Space+Grotesk:wght@300..700&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+@layer base {
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+  body { overscroll-behavior: none; }
+}
+
+:root {
+  --accent-color: #a855f7;
+  --accent-secondary: #ec4899;
+  --accent-glow: rgba(168, 85, 247, 0.22);
+  --ambient-bg-gradient: radial-gradient(circle at 65% 20%, rgba(139, 92, 246, 0.18) 0%, rgba(236, 72, 153, 0.08) 35%, rgba(19, 19, 22, 0) 70%);
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #0e0e11; }
+::-webkit-scrollbar-thumb { background: #282a30; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+
+@keyframes eq-band-1 { 0%, 100% { height: 14%; } 30% { height: 88%; } 70% { height: 42%; } }
+@keyframes eq-band-2 { 0%, 100% { height: 62%; } 25% { height: 18%; } 65% { height: 96%; } }
+@keyframes eq-band-3 { 0%, 100% { height: 35%; } 50% { height: 100%; } 85% { height: 26%; } }
+@keyframes eq-band-4 { 0%, 100% { height: 88%; } 40% { height: 20%; } 75% { height: 92%; } }
+@keyframes eq-band-5 { 0%, 100% { height: 38%; } 45% { height: 82%; } 80% { height: 25%; } }
+@keyframes eq-band-6 { 0%, 100% { height: 72%; } 35% { height: 32%; } 70% { height: 85%; } }
+@keyframes eq-band-7 { 0%, 100% { height: 22%; } 60% { height: 94%; } 90% { height: 46%; } }
+@keyframes eq-band-8 { 0%, 100% { height: 92%; } 30% { height: 36%; } 75% { height: 74%; } }
+
+.anim-eq-1 { animation: eq-band-1 0.72s ease-in-out infinite; }
+.anim-eq-2 { animation: eq-band-2 0.61s ease-in-out infinite 0.08s; }
+.anim-eq-3 { animation: eq-band-3 0.84s ease-in-out infinite 0.16s; }
+.anim-eq-4 { animation: eq-band-4 0.69s ease-in-out infinite 0.22s; }
+.anim-eq-5 { animation: eq-band-5 0.93s ease-in-out infinite 0.04s; }
+.anim-eq-6 { animation: eq-band-6 0.58s ease-in-out infinite 0.28s; }
+.anim-eq-7 { animation: eq-band-7 0.78s ease-in-out infinite 0.12s; }
+.anim-eq-8 { animation: eq-band-8 0.66s ease-in-out infinite 0.19s; }
+
+.paused-anim { animation-play-state: paused !important; }
+
+.ambient-stage-glow {
+  background-image: var(--ambient-bg-gradient);
+  transition: background-image 0.6s ease;
+}
+
+.theme-accent-bg {
+  background-color: var(--accent-color);
+  transition: background-color 0.4s ease;
+}
+
+.theme-accent-text {
+  color: var(--accent-color);
+  transition: color 0.4s ease;
+}
+
+.theme-accent-border {
+  border-color: var(--accent-color);
+  transition: border-color 0.4s ease;
+}
+
+.theme-accent-fill {
+  fill: var(--accent-color);
+  transition: fill 0.4s ease;
+}
+
+.visualizer-bar {
+  background: linear-gradient(180deg, var(--accent-secondary) 0%, var(--accent-color) 70%, #4c1d95 100%);
+  transition: background 0.4s ease;
+}
+</style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "surface-container-lowest": "#0e0e11",
+        "surface-dim": "#131316",
+        "surface-container-low": "#1b1b1e",
+        "surface-container": "#1f1f22",
+        "surface-container-high": "#2a2a2d",
+        "surface-container-highest": "#353438",
+        "surface-panel": "#17181c",
+        "surface-border": "#282a30",
+        "surface": "#131316",
+        "charcoal-dark": "#0a0a0c",
+        "on-surface": "#e4e1e6",
+        "on-surface-variant": "#8e919e",
+        "paper-white": "#f5f4ef",
+        "muted-silver": "#8e919e",
+        "primary": "#ff2b38",
+        "primary-container": "#ff2b38",
+        "on-primary": "#ffffff",
+        "tertiary": "#f3c000",
+        "secondary": "#b5c4ff"
+      },
+      fontFamily: {
+        "headline-lg": ["Space Grotesk", "sans-serif"],
+        "headline-md": ["Space Grotesk", "sans-serif"],
+        "headline-sm": ["Space Grotesk", "sans-serif"],
+        "body-lg": ["Hanken Grotesk", "sans-serif"],
+        "body-md": ["Hanken Grotesk", "sans-serif"],
+        "body-sm": ["Hanken Grotesk", "sans-serif"],
+        "label-data-lg": ["Space Mono", "monospace"],
+        "label-data-md": ["Space Mono", "monospace"],
+        "label-stamp": ["Space Mono", "monospace"]
+      }
+    }
+  }
+};
+</script>
+</head>
+<body class="bg-surface text-on-surface font-body-md select-none h-screen w-screen flex flex-col overflow-hidden">
+<!-- 1. WINDOW TITLEBAR: 100% OFFLINE DESKTOP WINDOW WITH MINIMALIST CONTROLS -->
+<header class="h-9 flex-shrink-0 bg-charcoal-dark border-b border-surface-border flex items-center justify-between px-3 z-50">
+<!-- App Branding & Local Mode indicator -->
+<div class="flex items-center gap-2.5">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-none inline-block theme-accent-bg" id="app-brand-square"></span>
+<span class="font-headline-sm text-sm font-bold text-paper-white tracking-widest">CMP</span>
+</div>
+<span class="text-surface-border text-xs">/</span>
+<span class="font-label-stamp text-[10px] text-muted-silver tracking-wider">COOL MUSIC PLAYER</span>
+<span class="px-1.5 py-0.2 bg-surface-container-high text-tertiary font-label-stamp text-[9px] border border-surface-border">[v1.0 LOCAL EDITION]</span>
+<span class="flex items-center gap-1 text-[10px] text-muted-silver font-label-stamp pl-2">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+        OFFLINE STORAGE
+      </span>
+</div>
+<!-- Minimalist Native Windows Window Controls -->
+<div class="flex items-center -mr-3">
+<button aria-label="Minimize" class="h-9 w-11 flex items-center justify-center text-muted-silver hover:bg-surface-container hover:text-paper-white transition-colors">
+<span class="material-symbols-outlined text-[13px]">remove</span>
+</button>
+<button aria-label="Maximize" class="h-9 w-11 flex items-center justify-center text-muted-silver hover:bg-surface-container hover:text-paper-white transition-colors">
+<span class="material-symbols-outlined text-[12px]">crop_square</span>
+</button>
+<button aria-label="Close" class="h-9 w-11 flex items-center justify-center text-muted-silver hover:bg-red-600 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[15px]">close</span>
+</button>
+</div>
+</header>
+<!-- MAIN APPLICATION LAYOUT -->
+<div class="flex flex-1 min-h-0 overflow-hidden">
+<!-- 2. LOCAL FILE ESSENTIALS SIDEBAR -->
+<aside class="w-64 bg-surface-container-lowest border-r border-surface-border flex flex-col justify-between flex-shrink-0 z-20">
+<div class="flex flex-col flex-1 min-h-0">
+<!-- Sidebar Actions Section -->
+<div class="p-3 border-b border-surface-border space-y-2">
+<div class="font-label-stamp text-[10px] text-muted-silver tracking-wider">LOCAL SOURCES</div>
+<button class="w-full flex items-center justify-center gap-2 px-3 py-2 text-white font-label-data-md text-xs font-bold transition-all shadow-sm active:translate-y-0.5 hover:brightness-110 theme-accent-bg" id="sidebar-add-files-btn">
+<span class="material-symbols-outlined text-[16px]">add_circle</span>
+<span class="">+ ADD FILES</span>
+</button>
+<button class="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-surface-container hover:bg-surface-container-high border border-surface-border text-paper-white font-label-data-md text-xs transition-colors">
+<span class="material-symbols-outlined text-[15px] text-tertiary">create_new_folder</span>
+<span class="">+ ADD FOLDER</span>
+</button>
+</div>
+<!-- Local Directory Tree -->
+<div class="flex-1 overflow-y-auto p-2 space-y-1">
+<div class="px-2 py-1 flex items-center justify-between text-[10px] font-label-stamp text-muted-silver">
+<span class="">INDEXED DIRECTORIES</span>
+<span class="text-tertiary">3 PATHS</span>
+</div>
+<div class="group flex items-center justify-between px-2.5 py-1.5 bg-surface-container border border-surface-border text-paper-white text-xs cursor-pointer hover:border-purple-400/60">
+<div class="flex items-center gap-2 truncate">
+<span class="material-symbols-outlined text-[15px] theme-accent-text">folder</span>
+<span class="font-label-data-md truncate">D:/Music/Archive</span>
+</div>
+<span class="text-[10px] font-label-stamp text-muted-silver shrink-0">1.4k</span>
+</div>
+<div class="group flex items-center justify-between px-2.5 py-1.5 hover:bg-surface-container border border-transparent hover:border-surface-border text-on-surface text-xs cursor-pointer">
+<div class="flex items-center gap-2 truncate">
+<span class="material-symbols-outlined text-[15px] text-muted-silver">folder</span>
+<span class="font-label-data-md truncate">C:/Audio/HiRes</span>
+</div>
+<span class="text-[10px] font-label-stamp text-muted-silver shrink-0">284</span>
+</div>
+<div class="group flex items-center justify-between px-2.5 py-1.5 hover:bg-surface-container border border-transparent hover:border-surface-border text-on-surface text-xs cursor-pointer">
+<div class="flex items-center gap-2 truncate">
+<span class="material-symbols-outlined text-[15px] text-muted-silver">folder</span>
+<span class="font-label-data-md truncate">E:/Vinyl Rips</span>
+</div>
+<span class="text-[10px] font-label-stamp text-muted-silver shrink-0">96</span>
+</div>
+<!-- Drag and Drop Target -->
+<div class="mt-3 p-3 border border-dashed border-surface-border hover:border-purple-400 bg-charcoal-dark text-center cursor-pointer transition-colors">
+<span class="material-symbols-outlined text-muted-silver text-xl">file_download</span>
+<div class="font-label-stamp text-[10px] text-paper-white mt-1">DROP AUDIO HERE</div>
+<div class="text-[9px] text-muted-silver font-body-sm mt-0.5">FLAC · DSD · WAV · ALAC · MP3</div>
+</div>
+</div>
+</div>
+<!-- Sidebar Bottom Local Device Info -->
+
+</aside>
+<!-- 3. MAIN CENTER & RIGHT STAGE -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface overflow-hidden ambient-stage-glow" id="main-stage">
+<!-- TOP BAR: HERO IMMERSIVE 'CURRENTLY PLAYING' SECTION -->
+<section class="flex-shrink-0 bg-surface-panel/90 backdrop-blur-sm border-b border-surface-border p-5 lg:p-6 shadow-md relative overflow-hidden">
+<!-- Dynamic Ambient Aura Backlight -->
+<div class="absolute -right-16 -top-16 w-[32rem] h-[32rem] rounded-full blur-3xl pointer-events-none transition-all duration-700 opacity-60" id="hero-aura-glow" style="background: radial-gradient(circle, rgb(168, 85, 247) 0%, rgb(236, 72, 153) 50%, transparent 75%);"></div>
+<div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-6 lg:gap-8 relative z-10">
+<!-- LARGE ALBUM ART HERO -->
+<div class="relative w-44 h-44 sm:w-52 sm:h-52 lg:w-60 lg:h-60 flex-shrink-0 bg-charcoal-dark border-2 border-surface-border shadow-2xl group overflow-hidden">
+<img alt="Now Playing Album Art" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" id="hero-album-art" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjBGZPL48l9NTVGOB7rbTQjEwX55hUXbKQUpbHawGRAtTRfqsbhJ8_gzNfQvpED9Bx1xYLrwllvrj8UJklS_gbhyIrrxvCcTogQrMXIwd3bR4fxit9YNPIX5Y6slg1LSnjiFsgZ8LlWDoEEXmjhw6_ZEcXK8jW5JjiTDGJLGPCFLRH12Xn9OwT2etSFpzg9oL2yzzrkGDZNysVql6WWx6xleC-kRLsMRq5QTZsER7ZxekR9k3zr3b7">
+<div class="absolute top-2 left-2 px-1.5 py-0.5 bg-charcoal-dark/95 border border-surface-border font-label-stamp text-[9px] tracking-widest theme-accent-text" id="hero-source-tag">
+              OFFLINE MASTER
+            </div>
+<div class="absolute bottom-2 right-2 px-1.5 py-0.5 bg-charcoal-dark/95 border border-surface-border font-label-stamp text-[9px] text-tertiary tracking-widest">
+              LOCAL FILE
+            </div>
+</div>
+<!-- TRACK METADATA + LIVE AUDIO VISUALIZER + SCRUBBER -->
+<div class="flex-1 min-w-0 flex flex-col justify-between w-full space-y-3">
+<!-- Meta & Codec Row -->
+<div>
+
+<h1 class="font-headline-lg text-2xl sm:text-3xl lg:text-4xl text-paper-white font-bold tracking-tight truncate leading-tight" id="hero-title">
+                Can't Tell Me Nothing
+              </h1>
+
+</div>
+<!-- IMMERSIVE LIVE AUDIO VISUALIZER (Real-time spectrum wave) -->
+<div class="bg-charcoal-dark/95 border border-surface-border p-2.5 flex items-end justify-between gap-1 h-16 w-full relative overflow-hidden" id="visualizer-stage" title="Real-time PCM Audio Visualizer">
+<!-- Frequency bars with dynamic gradient styling -->
+<span class="w-[3%] visualizer-bar anim-eq-1 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-3 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-2 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-4 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-5 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-6 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-7 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-8 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-2 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-4 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-1 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-3 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-5 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-7 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-8 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-2 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-6 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-4 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-3 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-1 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-5 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-7 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-8 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-2 rounded-none inline-block"></span>
+<span class="w-[3%] visualizer-bar anim-eq-4 rounded-none inline-block"></span>
+<!-- Subtle visualizer overlay peak waveform line -->
+<div class="absolute inset-0 pointer-events-none opacity-25 flex items-center justify-center">
+<svg class="w-full h-8" preserveAspectRatio="none" viewBox="0 0 400 30">
+<path d="M0,15 Q50,0 100,15 T200,15 T300,15 T400,15" fill="none" stroke="currentColor" stroke-dasharray="4,4" stroke-width="1" style="color: var(--accent-secondary);"></path>
+</svg>
+</div>
+</div>
+<!-- TACTILE SCRUB BAR -->
+<div class="space-y-1.5 pt-1">
+<div class="relative w-full h-3 bg-charcoal-dark border border-surface-border cursor-pointer group" id="hero-scrub-bar">
+<div class="absolute left-0 top-0 bottom-0 w-[60.5%] transition-all group-hover:bg-white theme-accent-bg" id="hero-scrub-fill" style="width: 60.5166%;"></div>
+<div class="absolute left-[60.5%] -top-1 w-2.5 h-5 bg-paper-white border border-charcoal-dark shadow-md" id="hero-scrub-thumb" style="left: 60.5166%;"></div>
+</div>
+<div class="flex justify-between items-center text-xs font-label-data-md text-muted-silver">
+<span class="text-paper-white font-bold" id="hero-time-current">02:44</span>
+<span class="text-xs font-label-stamp text-muted-silver" id="hero-track-position">TRACK 01 OF 05</span>
+<span id="hero-time-total" class="">04:31</span>
+</div>
+</div>
+<!-- PRIMARY TRANSPORT CONTROLS ROW -->
+<div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+
+<!-- Tactile Volume Slider -->
+
+</div>
+</div>
+</div>
+</section>
+<!-- BOTTOM SECTION: LOCAL TRACK QUEUE & ALBUM COLLECTION -->
+<section class="flex-1 flex flex-col min-h-0 p-4 lg:p-6 bg-surface/90 overflow-hidden">
+<!-- Section Bar -->
+<div class="flex items-center justify-between pb-3 border-b border-surface-border flex-shrink-0">
+<div class="flex items-center gap-3">
+<span class="font-headline-sm text-base font-bold text-paper-white tracking-wide">ACTIVE PLAYBACK QUEUE</span>
+<span class="px-2 py-0.5 bg-surface-container text-muted-silver font-label-stamp text-[10px] border border-surface-border" id="queue-count-badge">5 TRACKS LOADED</span>
+</div>
+<!-- Quick Local Search -->
+
+</div>
+<!-- Clean Track List Grid -->
+<div class="flex-1 overflow-y-auto pt-3 space-y-1" id="track-queue-list"><div class="flex items-center justify-between px-3 py-2 bg-paper-white text-charcoal-dark font-bold border-l-4 cursor-pointer shadow-md transition-all" style="border-left-color: rgb(168, 85, 247);">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-6 flex items-center justify-center" style="color: #a855f7">
+                  <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">volume_up</span>
+                </div>
+                <div class="flex flex-col min-w-0">
+                  <span class="font-body-md text-sm font-bold truncate">01. Can't Tell Me Nothing</span>
+                  <span class="font-label-stamp text-[10px] text-surface-variant truncate">Kanye West • Graduation (Archive Edition)</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="px-1.5 py-0.5 bg-charcoal-dark font-label-stamp text-[9px] border border-charcoal-dark" style="color: #a855f7">FLAC 24-BIT</span>
+                <span class="font-label-data-md text-xs">04:31</span>
+              </div>
+            </div><div class="group flex items-center justify-between px-3 py-2 hover:bg-surface-panel bg-surface-container/40 border border-transparent hover:border-surface-border text-on-surface cursor-pointer transition-colors">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="font-label-stamp text-xs text-muted-silver w-6 text-center group-hover:text-paper-white">02</span>
+                <div class="flex flex-col min-w-0">
+                  <span class="font-body-md text-sm text-paper-white truncate group-hover:text-purple-300 transition-colors">Stronger</span>
+                  <span class="font-label-stamp text-[10px] text-muted-silver truncate">Kanye West • Graduation</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="px-1.5 py-0.5 bg-surface-container text-muted-silver font-label-stamp text-[9px] border border-surface-border group-hover:text-paper-white">FLAC 24-BIT</span>
+                <span class="font-label-data-md text-xs text-muted-silver">05:11</span>
+              </div>
+            </div><div class="group flex items-center justify-between px-3 py-2 hover:bg-surface-panel bg-surface-container/40 border border-transparent hover:border-surface-border text-on-surface cursor-pointer transition-colors">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="font-label-stamp text-xs text-muted-silver w-6 text-center group-hover:text-paper-white">03</span>
+                <div class="flex flex-col min-w-0">
+                  <span class="font-body-md text-sm text-paper-white truncate group-hover:text-purple-300 transition-colors">Flashing Lights</span>
+                  <span class="font-label-stamp text-[10px] text-muted-silver truncate">Kanye West • Graduation</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="px-1.5 py-0.5 bg-surface-container text-muted-silver font-label-stamp text-[9px] border border-surface-border group-hover:text-paper-white">FLAC 16-BIT</span>
+                <span class="font-label-data-md text-xs text-muted-silver">03:57</span>
+              </div>
+            </div><div class="group flex items-center justify-between px-3 py-2 hover:bg-surface-panel bg-surface-container/40 border border-transparent hover:border-surface-border text-on-surface cursor-pointer transition-colors">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="font-label-stamp text-xs text-muted-silver w-6 text-center group-hover:text-paper-white">04</span>
+                <div class="flex flex-col min-w-0">
+                  <span class="font-body-md text-sm text-paper-white truncate group-hover:text-purple-300 transition-colors">Good Life</span>
+                  <span class="font-label-stamp text-[10px] text-muted-silver truncate">Kanye West • Graduation</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="px-1.5 py-0.5 bg-surface-container text-muted-silver font-label-stamp text-[9px] border border-surface-border group-hover:text-paper-white">MP3 320K</span>
+                <span class="font-label-data-md text-xs text-muted-silver">03:27</span>
+              </div>
+            </div><div class="group flex items-center justify-between px-3 py-2 hover:bg-surface-panel bg-surface-container/40 border border-transparent hover:border-surface-border text-on-surface cursor-pointer transition-colors">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="font-label-stamp text-xs text-muted-silver w-6 text-center group-hover:text-paper-white">05</span>
+                <div class="flex flex-col min-w-0">
+                  <span class="font-body-md text-sm text-paper-white truncate group-hover:text-purple-300 transition-colors">I Wonder</span>
+                  <span class="font-label-stamp text-[10px] text-muted-silver truncate">Kanye West • Graduation</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="px-1.5 py-0.5 bg-surface-container text-muted-silver font-label-stamp text-[9px] border border-surface-border group-hover:text-paper-white">DSD 128</span>
+                <span class="font-label-data-md text-xs text-muted-silver">04:03</span>
+              </div>
+            </div></div>
+</section>
+</main>
+</div>
+<!-- INTERACTIVE PLAYBACK & DYNAMIC COLOR THEME ENGINE -->
+<script>
+    (function() {
+      // Complete track data with true format specifications & dynamic palettes
+      const tracks = [
+        {
+          id: 1,
+          title: "Can't Tell Me Nothing",
+          artist: "Kanye West",
+          album: "Graduation (Archive Edition)",
+          year: "2007",
+          formatTag: "FLAC 24-BIT / 96kHz",
+          formatBadge: "FLAC 24-BIT",
+          bitrate: "4,608 kbps",
+          tier: "LOSSLESS STUDIO MASTER",
+          sourceTag: "OFFLINE MASTER",
+          duration: "04:31",
+          durationSec: 271,
+          cover: "https://lh3.googleusercontent.com/aida-public/AB6AXuCjBGZPL48l9NTVGOB7rbTQjEwX55hUXbKQUpbHawGRAtTRfqsbhJ8_gzNfQvpED9Bx1xYLrwllvrj8UJklS_gbhyIrrxvCcTogQrMXIwd3bR4fxit9YNPIX5Y6slg1LSnjiFsgZ8LlWDoEEXmjhw6_ZEcXK8jW5JjiTDGJLGPCFLRH12Xn9OwT2etSFpzg9oL2yzzrkGDZNysVql6WWx6xleC-kRLsMRq5QTZsER7ZxekR9k3zr3b7",
+          accentColor: "#a855f7",
+          accentSecondary: "#ec4899",
+          badgeColor: "bg-purple-900/60 text-purple-200 border-purple-700/60",
+          ambientGradient: "radial-gradient(circle at 65% 20%, rgba(139, 92, 246, 0.22) 0%, rgba(236, 72, 153, 0.10) 40%, rgba(19, 19, 22, 0) 70%)"
+        },
+        {
+          id: 2,
+          title: "Stronger",
+          artist: "Kanye West",
+          album: "Graduation",
+          year: "2007",
+          formatTag: "FLAC 24-BIT / 96kHz",
+          formatBadge: "FLAC 24-BIT",
+          bitrate: "4,520 kbps",
+          tier: "LOSSLESS STUDIO MASTER",
+          sourceTag: "OFFLINE MASTER",
+          duration: "05:11",
+          durationSec: 311,
+          cover: "https://lh3.googleusercontent.com/aida-public/AB6AXuCjBGZPL48l9NTVGOB7rbTQjEwX55hUXbKQUpbHawGRAtTRfqsbhJ8_gzNfQvpED9Bx1xYLrwllvrj8UJklS_gbhyIrrxvCcTogQrMXIwd3bR4fxit9YNPIX5Y6slg1LSnjiFsgZ8LlWDoEEXmjhw6_ZEcXK8jW5JjiTDGJLGPCFLRH12Xn9OwT2etSFpzg9oL2yzzrkGDZNysVql6WWx6xleC-kRLsMRq5QTZsER7ZxekR9k3zr3b7",
+          accentColor: "#8b5cf6",
+          accentSecondary: "#3b82f6",
+          badgeColor: "bg-indigo-900/60 text-indigo-200 border-indigo-700/60",
+          ambientGradient: "radial-gradient(circle at 65% 20%, rgba(139, 92, 246, 0.24) 0%, rgba(59, 130, 246, 0.12) 40%, rgba(19, 19, 22, 0) 70%)"
+        },
+        {
+          id: 3,
+          title: "Flashing Lights",
+          artist: "Kanye West",
+          album: "Graduation",
+          year: "2007",
+          formatTag: "FLAC 16-BIT / 44.1kHz",
+          formatBadge: "FLAC 16-BIT",
+          bitrate: "1,411 kbps",
+          tier: "CD QUALITY LOSSLESS",
+          sourceTag: "RED BOOK CD",
+          duration: "03:57",
+          durationSec: 237,
+          cover: "https://lh3.googleusercontent.com/aida-public/AB6AXuCjBGZPL48l9NTVGOB7rbTQjEwX55hUXbKQUpbHawGRAtTRfqsbhJ8_gzNfQvpED9Bx1xYLrwllvrj8UJklS_gbhyIrrxvCcTogQrMXIwd3bR4fxit9YNPIX5Y6slg1LSnjiFsgZ8LlWDoEEXmjhw6_ZEcXK8jW5JjiTDGJLGPCFLRH12Xn9OwT2etSFpzg9oL2yzzrkGDZNysVql6WWx6xleC-kRLsMRq5QTZsER7ZxekR9k3zr3b7",
+          accentColor: "#ec4899",
+          accentSecondary: "#f43f5e",
+          badgeColor: "bg-pink-900/60 text-pink-200 border-pink-700/60",
+          ambientGradient: "radial-gradient(circle at 65% 20%, rgba(236, 72, 153, 0.22) 0%, rgba(244, 63, 94, 0.10) 40%, rgba(19, 19, 22, 0) 70%)"
+        },
+        {
+          id: 4,
+          title: "Good Life",
+          artist: "Kanye West",
+          album: "Graduation",
+          year: "2007",
+          formatTag: "MP3 320 kbps / 48kHz",
+          formatBadge: "MP3 320K",
+          bitrate: "320 kbps",
+          tier: "CBR LOSSY ARCHIVE",
+          sourceTag: "MPEG LAYER-3",
+          duration: "03:27",
+          durationSec: 207,
+          cover: "https://lh3.googleusercontent.com/aida-public/AB6AXuCjBGZPL48l9NTVGOB7rbTQjEwX55hUXbKQUpbHawGRAtTRfqsbhJ8_gzNfQvpED9Bx1xYLrwllvrj8UJklS_gbhyIrrxvCcTogQrMXIwd3bR4fxit9YNPIX5Y6slg1LSnjiFsgZ8LlWDoEEXmjhw6_ZEcXK8jW5JjiTDGJLGPCFLRH12Xn9OwT2etSFpzg9oL2yzzrkGDZNysVql6WWx6xleC-kRLsMRq5QTZsER7ZxekR9k3zr3b7",
+          accentColor: "#f59e0b",
+          accentSecondary: "#ef4444",
+          badgeColor: "bg-amber-900/60 text-amber-200 border-amber-700/60",
+          ambientGradient: "radial-gradient(circle at 65% 20%, rgba(245, 158, 11, 0.18) 0%, rgba(239, 68, 68, 0.08) 40%, rgba(19, 19, 22, 0) 70%)"
+        },
+        {
+          id: 5,
+          title: "I Wonder",
+          artist: "Kanye West",
+          album: "Graduation",
+          year: "2007",
+          formatTag: "DSD 5.6MHz / 1-BIT",
+          formatBadge: "DSD 128",
+          bitrate: "5,644 kbps",
+          tier: "DIRECT STREAM DIGITAL",
+          sourceTag: "DSD MASTER",
+          duration: "04:03",
+          durationSec: 243,
+          cover: "https://lh3.googleusercontent.com/aida-public/AB6AXuCjBGZPL48l9NTVGOB7rbTQjEwX55hUXbKQUpbHawGRAtTRfqsbhJ8_gzNfQvpED9Bx1xYLrwllvrj8UJklS_gbhyIrrxvCcTogQrMXIwd3bR4fxit9YNPIX5Y6slg1LSnjiFsgZ8LlWDoEEXmjhw6_ZEcXK8jW5JjiTDGJLGPCFLRH12Xn9OwT2etSFpzg9oL2yzzrkGDZNysVql6WWx6xleC-kRLsMRq5QTZsER7ZxekR9k3zr3b7",
+          accentColor: "#10b981",
+          accentSecondary: "#06b6d4",
+          badgeColor: "bg-emerald-900/60 text-emerald-200 border-emerald-700/60",
+          ambientGradient: "radial-gradient(circle at 65% 20%, rgba(16, 185, 129, 0.20) 0%, rgba(6, 182, 212, 0.10) 40%, rgba(19, 19, 22, 0) 70%)"
+        }
+      ];
+
+      let currentIndex = 0;
+      let isPlaying = true;
+      let currentProgressSec = 164; // 02:44 default for track 1
+
+      // DOM Elements
+      const heroAlbumArt = document.getElementById('hero-album-art');
+      const heroTitle = document.getElementById('hero-title');
+      const heroArtist = document.getElementById('hero-artist');
+      const heroAlbum = document.getElementById('hero-album');
+      const heroYear = document.getElementById('hero-year');
+      const heroCodecTag = document.getElementById('hero-codec-tag');
+      const heroBitrateTag = document.getElementById('hero-bitrate-tag');
+      const heroTierTag = document.getElementById('hero-tier-tag');
+      const heroSourceTag = document.getElementById('hero-source-tag');
+      const heroTrackPosition = document.getElementById('hero-track-position');
+      const heroTimeCurrent = document.getElementById('hero-time-current');
+      const heroTimeTotal = document.getElementById('hero-time-total');
+      const heroScrubFill = document.getElementById('hero-scrub-fill');
+      const heroScrubThumb = document.getElementById('hero-scrub-thumb');
+      const heroScrubBar = document.getElementById('hero-scrub-bar');
+      const playBtn = document.getElementById('hero-play-btn');
+      const playIcon = document.getElementById('hero-play-icon');
+      const playText = document.getElementById('hero-play-text');
+      const visualizerStage = document.getElementById('visualizer-stage');
+      const queueList = document.getElementById('track-queue-list');
+      const btnPrev = document.getElementById('btn-prev');
+      const btnNext = document.getElementById('btn-next');
+      const volumeBar = document.getElementById('volume-bar');
+      const volumeFill = document.getElementById('volume-fill');
+      const volumeLabel = document.getElementById('volume-label');
+      const searchInput = document.getElementById('queue-search');
+
+      function formatTime(secs) {
+        const m = String(Math.floor(secs / 60)).padStart(2, '0');
+        const s = String(secs % 60).padStart(2, '0');
+        return `${m}:${s}`;
+      }
+
+      function applyTrackTheme(track) {
+        // Dynamic CSS variables adaptation
+        document.documentElement.style.setProperty('--accent-color', track.accentColor);
+        document.documentElement.style.setProperty('--accent-secondary', track.accentSecondary);
+        document.documentElement.style.setProperty('--ambient-bg-gradient', track.ambientGradient);
+
+        // Hero Aura glow update
+        const aura = document.getElementById('hero-aura-glow');
+        if (aura) {
+          aura.style.background = `radial-gradient(circle, ${track.accentColor} 0%, ${track.accentSecondary} 50%, transparent 75%)`;
+        }
+      }
+
+      function renderQueue(filter = "") {
+        if (!queueList) return;
+        queueList.innerHTML = "";
+
+        tracks.forEach((track, index) => {
+          if (filter && !track.title.toLowerCase().includes(filter.toLowerCase()) && !track.artist.toLowerCase().includes(filter.toLowerCase())) {
+            return;
+          }
+
+          const isActive = index === currentIndex;
+          const row = document.createElement('div');
+          
+          if (isActive) {
+            row.className = "flex items-center justify-between px-3 py-2 bg-paper-white text-charcoal-dark font-bold border-l-4 cursor-pointer shadow-md transition-all";
+            row.style.borderLeftColor = track.accentColor;
+            row.innerHTML = `
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-6 flex items-center justify-center" style="color: ${track.accentColor}">
+                  <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">volume_up</span>
+                </div>
+                <div class="flex flex-col min-w-0">
+                  <span class="font-body-md text-sm font-bold truncate">${String(track.id).padStart(2, '0')}. ${track.title}</span>
+                  <span class="font-label-stamp text-[10px] text-surface-variant truncate">${track.artist} • ${track.album}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="px-1.5 py-0.5 bg-charcoal-dark font-label-stamp text-[9px] border border-charcoal-dark" style="color: ${track.accentColor}">${track.formatBadge}</span>
+                <span class="font-label-data-md text-xs">${track.duration}</span>
+              </div>
+            `;
+          } else {
+            row.className = "group flex items-center justify-between px-3 py-2 hover:bg-surface-panel bg-surface-container/40 border border-transparent hover:border-surface-border text-on-surface cursor-pointer transition-colors";
+            row.innerHTML = `
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="font-label-stamp text-xs text-muted-silver w-6 text-center group-hover:text-paper-white">${String(track.id).padStart(2, '0')}</span>
+                <div class="flex flex-col min-w-0">
+                  <span class="font-body-md text-sm text-paper-white truncate group-hover:text-purple-300 transition-colors">${track.title}</span>
+                  <span class="font-label-stamp text-[10px] text-muted-silver truncate">${track.artist} • ${track.album}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="px-1.5 py-0.5 bg-surface-container text-muted-silver font-label-stamp text-[9px] border border-surface-border group-hover:text-paper-white">${track.formatBadge}</span>
+                <span class="font-label-data-md text-xs text-muted-silver">${track.duration}</span>
+              </div>
+            `;
+          }
+
+          row.addEventListener('click', () => {
+            loadTrack(index);
+          });
+
+          queueList.appendChild(row);
+        });
+      }
+
+      function loadTrack(index) {
+        currentIndex = index;
+        const track = tracks[currentIndex];
+
+        // Update DOM fields
+        heroTitle.textContent = track.title;
+        heroArtist.textContent = track.artist;
+        heroAlbum.textContent = track.album;
+        heroYear.textContent = track.year;
+        heroCodecTag.textContent = track.formatTag;
+        heroBitrateTag.textContent = track.bitrate;
+        heroTierTag.textContent = track.tier;
+        heroSourceTag.textContent = track.sourceTag;
+        heroAlbumArt.src = track.cover;
+        heroTimeTotal.textContent = track.duration;
+        heroTrackPosition.textContent = `TRACK ${String(track.id).padStart(2, '0')} OF ${String(tracks.length).padStart(2, '0')}`;
+
+        // Reset track progress
+        currentProgressSec = 0;
+        updateProgressUI(0);
+
+        // Dynamic theme adaptation
+        applyTrackTheme(track);
+
+        // Refresh Queue visual state
+        renderQueue(searchInput ? searchInput.value : "");
+
+        // Ensure playing
+        setPlaying(true);
+      }
+
+      function updateProgressUI(pct) {
+        const track = tracks[currentIndex];
+        const percent = Math.max(0, Math.min(100, pct * 100));
+        heroScrubFill.style.width = `${percent}%`;
+        heroScrubThumb.style.left = `${percent}%`;
+        heroTimeCurrent.textContent = formatTime(Math.floor(track.durationSec * pct));
+      }
+
+      function setPlaying(play) {
+        isPlaying = play;
+        if (playIcon) playIcon.textContent = isPlaying ? 'pause' : 'play_arrow';
+        if (playText) playText.textContent = isPlaying ? 'PAUSE' : 'PLAY';
+
+        const bars = visualizerStage ? visualizerStage.querySelectorAll('.visualizer-bar') : [];
+        bars.forEach(b => {
+          if (isPlaying) {
+            b.classList.remove('paused-anim');
+          } else {
+            b.classList.add('paused-anim');
+          }
+        });
+      }
+
+      // Event Listeners
+      if (playBtn) {
+        playBtn.addEventListener('click', () => {
+          setPlaying(!isPlaying);
+        });
+      }
+
+      if (btnNext) {
+        btnNext.addEventListener('click', () => {
+          const nextIdx = (currentIndex + 1) % tracks.length;
+          loadTrack(nextIdx);
+        });
+      }
+
+      if (btnPrev) {
+        btnPrev.addEventListener('click', () => {
+          const prevIdx = (currentIndex - 1 + tracks.length) % tracks.length;
+          loadTrack(prevIdx);
+        });
+      }
+
+      if (heroScrubBar) {
+        heroScrubBar.addEventListener('click', (e) => {
+          const rect = heroScrubBar.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          const pct = Math.max(0, Math.min(1, clickX / rect.width));
+          updateProgressUI(pct);
+        });
+      }
+
+      if (volumeBar && volumeFill && volumeLabel) {
+        volumeBar.addEventListener('click', (e) => {
+          const rect = volumeBar.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          const pct = Math.max(0, Math.min(1, clickX / rect.width));
+          const pRounded = Math.round(pct * 100);
+          volumeFill.style.width = pRounded + '%';
+          volumeLabel.textContent = pRounded + '%';
+        });
+      }
+
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          renderQueue(e.target.value);
+        });
+      }
+
+      // Initial track configuration & Queue rendering
+      applyTrackTheme(tracks[0]);
+      renderQueue();
+      // Set initial progress ~60.5% (02:44 of 04:31)
+      updateProgressUI(164 / 271);
+    })();
+  </script>
+
+
+</body></html>

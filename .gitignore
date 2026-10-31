@@ -1,2 +1,43 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.spec
+
+# PyInstaller
+*.manifest
+*.exe
+
+# Virtual environments
+venv/
+env/
+.env
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+
+# Local data
+data/
+*.json
+
+# Node (if any)
 node_modules/
-assets/
+
+# Audio server cache (if any)
+*.cache
+tests/

@@ -12,6 +12,17 @@ from pathlib import Path
 from urllib.parse import urlparse, unquote
 import mimetypes
 
+# Ensure correct MIME types for audio extensions
+mimetypes.add_type('audio/flac', '.flac')
+mimetypes.add_type('audio/ogg', '.ogg')
+mimetypes.add_type('audio/opus', '.opus')
+mimetypes.add_type('audio/x-wav', '.wav')
+mimetypes.add_type('audio/mp4', '.m4a')
+mimetypes.add_type('audio/aac', '.aac')
+mimetypes.add_type('audio/x-wavpack', '.wv')
+mimetypes.add_type('audio/dsf', '.dsf')
+mimetypes.add_type('audio/dff', '.dff')
+
 
 class AudioRequestHandler(http.server.SimpleHTTPRequestHandler):
     """HTTP request handler with Range support for audio files."""
@@ -23,8 +34,9 @@ class AudioRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         """Handle GET requests with Range support."""
         parsed = urlparse(self.path)
+        raw_path = self.path
         path = unquote(parsed.path)
-        
+        print(f"[AUDIO] HTTP GET raw_path={raw_path} decoded_path={path}")
         # Audio file serving endpoint
         if path.startswith('/audio/'):
             self.serve_audio(path[7:])  # Remove '/audio/' prefix
@@ -43,14 +55,18 @@ class AudioRequestHandler(http.server.SimpleHTTPRequestHandler):
     
     def serve_audio(self, file_path: str):
         """Serve audio file with Range request support."""
+        print(f"[AUDIO] serve_audio request for: {file_path}")
+        print(f"[AUDIO] HTTP method={self.command} raw_path={self.path}")
         # Resolve the path
         try:
             # The file_path should be an absolute path or we look it up
             abs_path = Path(file_path).resolve()
+            print(f"[AUDIO] resolved absolute path: {abs_path}")
             
             # Security: ensure file exists and is readable
             if not abs_path.exists() or not abs_path.is_file():
-                self.send_error(404, "File not found")
+                print(f"[AUDIO] file not found: {abs_path}")
+                self._safe_send_error(404, "File not found")
                 return
             
             # Check if it's in our library (optional security)
@@ -60,9 +76,11 @@ class AudioRequestHandler(http.server.SimpleHTTPRequestHandler):
             mime_type, _ = mimetypes.guess_type(str(abs_path))
             if not mime_type:
                 mime_type = 'audio/mpeg'
+            print(f"[AUDIO] file size: {file_size}, mime: {mime_type}")
             
             # Parse Range header
             range_header = self.headers.get('Range')
+            print(f"[AUDIO] Range header: {range_header}")
             
             if range_header:
                 # Parse range: "bytes=start-end"
@@ -76,6 +94,7 @@ class AudioRequestHandler(http.server.SimpleHTTPRequestHandler):
                     start = max(0, min(start, file_size - 1))
                     end = max(start, min(end, file_size - 1))
                     content_length = end - start + 1
+                    print(f"[AUDIO] serving range {start}-{end}/{file_size} ({content_length} bytes)")
                     
                     self.send_response(206)  # Partial Content
                     self.send_header('Content-Type', mime_type)
@@ -83,9 +102,12 @@ class AudioRequestHandler(http.server.SimpleHTTPRequestHandler):
                     self.send_header('Content-Length', str(content_length))
                     self.send_header('Content-Range', f'bytes {start}-{end}/{file_size}')
                     self.send_header('Cache-Control', 'public, max-age=3600')
+                    self.send_header('Access-Control-Allow-Origin', '*')
                     self.end_headers()
+                    print(f"[AUDIO] Response headers sent: 206 Partial Content, Content-Type={mime_type}, Content-Length={content_length}, Content-Range=bytes {start}-{end}/{file_size}, Access-Control-Allow-Origin=*")
                     
                     # Send file chunk
+                    sent = 0
                     with open(abs_path, 'rb') as f:
                         f.seek(start)
                         remaining = content_length
@@ -95,35 +117,63 @@ class AudioRequestHandler(http.server.SimpleHTTPRequestHandler):
                             data = f.read(read_size)
                             if not data:
                                 break
-                            self.wfile.write(data)
+                            try:
+                                self.wfile.write(data)
+                            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                                # Client disconnected; stop sending
+                                print("[AUDIO] client disconnected during streaming")
+                                return
+                            sent += len(data)
                             remaining -= len(data)
+                    print(f"[AUDIO] range stream finished, bytes sent={sent}")
                     
                 except (ValueError, IndexError):
                     # Invalid range, serve full file
+                    print("[AUDIO] invalid range, serving full file")
                     self.serve_full_file(abs_path, file_size, mime_type)
             else:
                 # No range header, serve full file
+                print("[AUDIO] no range header, serving full file")
                 self.serve_full_file(abs_path, file_size, mime_type)
                 
         except Exception as e:
-            print(f"Error serving audio: {e}")
-            self.send_error(500, str(e))
+            print(f"[AUDIO] Error serving audio: {e}")
+            self._safe_send_error(500, str(e))
+
+    def _safe_send_error(self, code, message=None):
+        """Send an error response, ignoring client disconnects."""
+        try:
+            self.send_error(code, message)
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            # Client already gone; nothing to do
+            pass
     
     def serve_full_file(self, abs_path: Path, file_size: int, mime_type: str):
         """Serve the full audio file."""
+        print(f"[AUDIO] serve_full_file called for {abs_path} size={file_size}")
         self.send_response(200)
         self.send_header('Content-Type', mime_type)
         self.send_header('Accept-Ranges', 'bytes')
         self.send_header('Content-Length', str(file_size))
         self.send_header('Cache-Control', 'public, max-age=3600')
+        self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
+        print(f"[AUDIO] Response headers sent: 200 OK, Content-Type={mime_type}, Content-Length={file_size}, Accept-Ranges=bytes, Access-Control-Allow-Origin=*")
         
+        sent = 0
         with open(abs_path, 'rb') as f:
             while True:
                 chunk = f.read(8192)
                 if not chunk:
                     break
-                self.wfile.write(chunk)
+                try:
+                    self.wfile.write(chunk)
+                except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+                    # Client disconnected; stop sending
+                    print("[AUDIO] client disconnected during streaming")
+                    return
+                sent += len(chunk)
+        print(f"[AUDIO] full stream finished, bytes sent={sent}")
     
     def log_message(self, format, *args):
         """Suppress default log messages."""

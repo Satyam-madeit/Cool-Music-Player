@@ -79,23 +79,33 @@ class LibraryManager:
             print(f"Error saving library: {e}")
     
     def add_tracks(self, tracks: List[Dict]) -> List[Dict]:
-        """Add tracks to library, avoiding duplicates by path."""
+        """Add tracks to library, avoiding duplicates by path.
+        Returns a list of track dicts for each input track (newly added or existing)."""
         with self._lock:
-            added = []
-            existing_paths = {t['path'] for t in self._tracks}
-            
+            result = []
+            existing_by_path = {t['path']: t for t in self._tracks}
+            any_new = False
+            # Debug
+            print(f"[LIB] add_tracks start: existing count={len(existing_by_path)} incoming={len(tracks)}")
             for track in tracks:
-                if track['path'] not in existing_paths:
-                    track['id'] = self._next_track_id
+                path = track.get('path')
+                print(f"[LIB] processing track path={path}")
+                if path not in existing_by_path:
+                    # New track
+                    new_track = dict(track)  # copy to avoid mutating input
+                    new_track['id'] = self._next_track_id
                     self._next_track_id += 1
-                    self._tracks.append(track)
-                    existing_paths.add(track['path'])
-                    added.append(track)
-            
-            if added:
+                    self._tracks.append(new_track)
+                    existing_by_path[path] = new_track
+                    result.append(new_track)
+                    any_new = True
+                else:
+                    # Existing track: return the stored track (with its ID)
+                    result.append(existing_by_path[path])
+            print(f"[LIB] add_tracks result count={len(result)} any_new={any_new}")
+            if any_new:
                 self._save_tracks()
-            
-            return added
+            return result
     
     def get_all_tracks(self) -> List[Dict]:
         """Get all tracks in the library."""
